@@ -2,11 +2,22 @@
 module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+      },
+      colors: {
+        slate: {
+          950: '#030712',
+          900: '#0f172a',
+          800: '#1e293b',
+        },
+      },
+    },
   },
   plugins: [],
 }
