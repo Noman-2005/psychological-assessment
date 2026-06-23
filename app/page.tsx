@@ -241,7 +241,7 @@ const exercises = {
 // 5. Main Component
 export default function MentalHealthAssessment() {
   const [lang, setLang] = useState('bn');
-  const [step, setStep] = useState(0); 
+  const [step, setStep] = useState(0);
   const [selectedMH, setSelectedMH] = useState(null);
   const [currentMHQ, setCurrentMHQ] = useState(0);
   const [mhScores, setMHScores] = useState({});
@@ -302,7 +302,25 @@ export default function MentalHealthAssessment() {
 
   const personalityResult = step >= 5 ? calculatePersonality() : {};
 
+  // ==========================================
+  // FIX: generateReport is now ONLY called inside Step 7, and checks for selectedMH
+  // ==========================================
   const generateReport = () => {
+    // Safety check: if no mental health segment selected, return fallback
+    if (!selectedMH) {
+      return {
+        clientName: "Self-Administered",
+        dob: "N/A",
+        age: "N/A",
+        assessmentType: "Not Selected",
+        mhResult: "Not Available",
+        personalityProfile: personalityResult,
+        recommendation: "Please complete the mental health assessment first.",
+        generatedDate: new Date().toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        disclaimer: langData[lang].report.disclaimer
+      };
+    }
+
     const date = new Date().toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', {
       year: 'numeric', month: 'long', day: 'numeric'
     });
@@ -549,64 +567,72 @@ export default function MentalHealthAssessment() {
 
           {step === 7 && (
             <div className="space-y-8 animate-fade-in-up">
-              <div ref={reportRef} className="bg-white text-slate-900 p-10 rounded-xl shadow-2xl max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
-                <div className="text-center border-b-4 border-emerald-600 pb-6 mb-8">
-                  <h1 className="text-3xl font-bold tracking-tight text-slate-900">{T.report.title}</h1>
-                  <p className="text-sm text-slate-500 mt-2">{T.report.generated}: {generateReport().generatedDate}</p>
-                </div>
+              {/* Generate report only when we are on step 7 and selectedMH is not null */}
+              {(() => {
+                const reportData = generateReport();
+                return (
+                  <>
+                    <div ref={reportRef} className="bg-white text-slate-900 p-10 rounded-xl shadow-2xl max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
+                      <div className="text-center border-b-4 border-emerald-600 pb-6 mb-8">
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">{T.report.title}</h1>
+                        <p className="text-sm text-slate-500 mt-2">{T.report.generated}: {reportData.generatedDate}</p>
+                      </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
-                  <div><span className="font-bold text-slate-700">{T.report.client}:</span> {generateReport().clientName}</div>
-                  <div><span className="font-bold text-slate-700">{T.report.dob}:</span> {generateReport().dob}</div>
-                  <div><span className="font-bold text-slate-700">{T.report.age}:</span> {generateReport().age}</div>
-                  <div><span className="font-bold text-slate-700">{T.report.assessmentType}:</span> {generateReport().assessmentType}</div>
-                </div>
+                      <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
+                        <div><span className="font-bold text-slate-700">{T.report.client}:</span> {reportData.clientName}</div>
+                        <div><span className="font-bold text-slate-700">{T.report.dob}:</span> {reportData.dob}</div>
+                        <div><span className="font-bold text-slate-700">{T.report.age}:</span> {reportData.age}</div>
+                        <div><span className="font-bold text-slate-700">{T.report.assessmentType}:</span> {reportData.assessmentType}</div>
+                      </div>
 
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.mhResult}</h2>
-                  <div className={`p-4 rounded-lg ${mhSeverity === 'severe' ? 'bg-red-100 border border-red-300' : mhSeverity === 'moderate' ? 'bg-amber-100 border border-amber-300' : 'bg-emerald-100 border border-emerald-300'}`}>
-                    <p className="text-lg">{generateReport().mhResult}</p>
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.personalityResult}</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(personalityResult).map(([trait, score]) => (
-                      <div key={trait} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-sm text-slate-700">{T.personality.traits[trait]}</span>
-                          <span className="text-sm text-slate-500">{(score as number).toFixed(1)} / 5</span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${((score as number) / 5) * 100}%` }}></div>
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.mhResult}</h2>
+                        <div className={`p-4 rounded-lg ${mhSeverity === 'severe' ? 'bg-red-100 border border-red-300' : mhSeverity === 'moderate' ? 'bg-amber-100 border border-amber-300' : 'bg-emerald-100 border border-emerald-300'}`}>
+                          <p className="text-lg">{reportData.mhResult}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
 
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.recommendation}</h2>
-                  <p className="text-lg leading-relaxed">{generateReport().recommendation}</p>
-                </div>
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.personalityResult}</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {Object.entries(reportData.personalityProfile).map(([trait, score]) => (
+                            <div key={trait} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-medium text-sm text-slate-700">{T.personality.traits[trait]}</span>
+                                <span className="text-sm text-slate-500">{(score as number).toFixed(1)} / 5</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${((score as number) / 5) * 100}%` }}></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-                <div className="mt-8 p-4 border-2 border-red-400 rounded-lg bg-red-50">
-                  <h3 className="font-bold text-red-700 text-sm mb-2">⚠️ {lang === 'bn' ? 'সতর্কীকরণ' : 'Disclaimer'}</h3>
-                  <p className="text-xs text-red-600 leading-relaxed">
-                    {generateReport().disclaimer}
-                  </p>
-                </div>
-              </div>
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.recommendation}</h2>
+                        <p className="text-lg leading-relaxed">{reportData.recommendation}</p>
+                      </div>
 
-              <div className="flex flex-col gap-4">
-                <button onClick={downloadReport} className="w-full py-3 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 text-[#0b1120] font-medium hover:shadow-2xl hover:shadow-emerald-400/20 transition-all duration-300">
-                  {T.report.download}
-                </button>
-                <button onClick={reset} className="w-full py-3 rounded-full border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-300 text-slate-300 font-light">
-                  {T.restart}
-                </button>
-              </div>
+                      <div className="mt-8 p-4 border-2 border-red-400 rounded-lg bg-red-50">
+                        <h3 className="font-bold text-red-700 text-sm mb-2">⚠️ {lang === 'bn' ? 'সতর্কীকরণ' : 'Disclaimer'}</h3>
+                        <p className="text-xs text-red-600 leading-relaxed">
+                          {reportData.disclaimer}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      <button onClick={downloadReport} className="w-full py-3 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 text-[#0b1120] font-medium hover:shadow-2xl hover:shadow-emerald-400/20 transition-all duration-300">
+                        {T.report.download}
+                      </button>
+                      <button onClick={reset} className="w-full py-3 rounded-full border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-300 text-slate-300 font-light">
+                        {T.restart}
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
