@@ -108,7 +108,7 @@ const langData = {
   }
 };
 
-// 2. Personality Questions (Mini-IPIP - 20 Questions)
+// 2. Personality Questions
 const personalityQuestions = [
   { id: 1, trait: "Extraversion", en: "I am the life of the party.", bn: "আমি যেকোনো অনুষ্ঠানের বা আড্ডার প্রাণকেন্দ্র হয়ে থাকি।", reverse: false },
   { id: 2, trait: "Extraversion", en: "I don't talk a lot.", bn: "আমি খুব একটা বেশি কথা বলি না।", reverse: true },
@@ -259,8 +259,8 @@ export default function MentalHealthAssessment() {
   };
 
   const calcMH = () => {
-    const score = mhScores[selectedMH.label] || 0;
-    const max = selectedMH.questions.length * 3;
+    const score = mhScores[selectedMH?.label || ''] || 0;
+    const max = selectedMH?.questions?.length * 3 || 1;
     if (score >= max * 0.7) return 'severe';
     if (score >= max * 0.4) return 'moderate';
     return 'healthy';
@@ -301,74 +301,6 @@ export default function MentalHealthAssessment() {
   };
 
   const personalityResult = step >= 5 ? calculatePersonality() : {};
-
-  // ==========================================
-  // FIX: generateReport is now ONLY called inside Step 7, and checks for selectedMH
-  // ==========================================
-  const generateReport = () => {
-    // Safety check: if no mental health segment selected, return fallback
-    if (!selectedMH) {
-      return {
-        clientName: "Self-Administered",
-        dob: "N/A",
-        age: "N/A",
-        assessmentType: "Not Selected",
-        mhResult: "Not Available",
-        personalityProfile: personalityResult,
-        recommendation: "Please complete the mental health assessment first.",
-        generatedDate: new Date().toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        disclaimer: langData[lang].report.disclaimer
-      };
-    }
-
-    const date = new Date().toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    });
-
-    const mhInterpretation = {
-      severe: lang === 'bn' ? 'তীব্র মানসিক সংকট (জরুরি মনোযোগ প্রয়োজন)' : 'Severe Mental Distress (Urgent Attention Required)',
-      moderate: lang === 'bn' ? 'মাঝারি মানসিক চাপ (নিয়মিত পর্যবেক্ষণ প্রয়োজন)' : 'Moderate Mental Stress (Regular Monitoring Recommended)',
-      healthy: lang === 'bn' ? 'স্বাভাবিক মানসিক অবস্থা (সুস্থ ও সচল)' : 'Healthy Mental State (Resilient & Balanced)'
-    };
-
-    return {
-      clientName: "Self-Administered",
-      dob: "N/A",
-      age: "N/A",
-      assessmentType: selectedMH ? selectedMH.label : "Not Selected",
-      mhResult: mhInterpretation[mhSeverity],
-      personalityProfile: personalityResult,
-      recommendation: mhSeverity === 'severe' ? 
-        (lang === 'bn' ? 'অবিলম্বে একজন লাইসেন্সপ্রাপ্ত ক্লিনিক্যাল সাইকিয়াট্রিস্টের পরামর্শ নিন।' : 'Please consult a licensed Clinical Psychiatrist immediately.') :
-        mhSeverity === 'moderate' ?
-        (lang === 'bn' ? 'সেলফ-কেয়ার ও নিয়মিত পর্যবেক্ষণ করুন। প্রয়োজনে বিশেষজ্ঞের সাহায্য নিন।' : 'Practice self-care and monitor regularly. Seek professional help if needed.') :
-        (lang === 'bn' ? 'আপনার মানসিক স্বাস্থ্য ভালো। সুস্থ থাকুন, নিয়মিত মাইন্ডফুলনেস প্র্যাকটিস করুন।' : 'Your mental health is good. Stay healthy and practice mindfulness regularly.'),
-      generatedDate: date,
-      disclaimer: langData[lang].report.disclaimer
-    };
-  };
-
-  const downloadReport = async () => {
-    const reportElement = reportRef.current;
-    if (!reportElement) return;
-
-    try {
-      const canvas = await html2canvas(reportElement, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save('Psychological_Assessment_Report.pdf');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    }
-  };
 
   const reset = () => {
     setStep(0);
@@ -567,9 +499,43 @@ export default function MentalHealthAssessment() {
 
           {step === 7 && (
             <div className="space-y-8 animate-fade-in-up">
-              {/* Generate report only when we are on step 7 and selectedMH is not null */}
               {(() => {
-                const reportData = generateReport();
+                // Safe check: if no assessment is selected, show a fallback message.
+                if (!selectedMH) {
+                  return (
+                    <div className="p-10 text-center bg-slate-800/30 rounded-xl border border-slate-700/30">
+                      <p className="text-lg text-slate-300">No assessment data available. Please complete the assessment first.</p>
+                      <button onClick={reset} className="mt-4 px-6 py-2 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-500/30 transition-all">{T.restart}</button>
+                    </div>
+                  );
+                }
+
+                const date = new Date().toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', {
+                  year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                const mhInterpretation = {
+                  severe: lang === 'bn' ? 'তীব্র মানসিক সংকট (জরুরি মনোযোগ প্রয়োজন)' : 'Severe Mental Distress (Urgent Attention Required)',
+                  moderate: lang === 'bn' ? 'মাঝারি মানসিক চাপ (নিয়মিত পর্যবেক্ষণ প্রয়োজন)' : 'Moderate Mental Stress (Regular Monitoring Recommended)',
+                  healthy: lang === 'bn' ? 'স্বাভাবিক মানসিক অবস্থা (সুস্থ ও সচল)' : 'Healthy Mental State (Resilient & Balanced)'
+                };
+
+                const reportData = {
+                  clientName: "Self-Administered",
+                  dob: "N/A",
+                  age: "N/A",
+                  assessmentType: selectedMH.label,
+                  mhResult: mhInterpretation[mhSeverity],
+                  personalityProfile: personalityResult,
+                  recommendation: mhSeverity === 'severe' ? 
+                    (lang === 'bn' ? 'অবিলম্বে একজন লাইসেন্সপ্রাপ্ত ক্লিনিক্যাল সাইকিয়াট্রিস্টের পরামর্শ নিন।' : 'Please consult a licensed Clinical Psychiatrist immediately.') :
+                    mhSeverity === 'moderate' ?
+                    (lang === 'bn' ? 'সেলফ-কেয়ার ও নিয়মিত পর্যবেক্ষণ করুন। প্রয়োজনে বিশেষজ্ঞের সাহায্য নিন।' : 'Practice self-care and monitor regularly. Seek professional help if needed.') :
+                    (lang === 'bn' ? 'আপনার মানসিক স্বাস্থ্য ভালো। সুস্থ থাকুন, নিয়মিত মাইন্ডফুলনেস প্র্যাকটিস করুন।' : 'Your mental health is good. Stay healthy and practice mindfulness regularly.'),
+                  generatedDate: date,
+                  disclaimer: langData[lang].report.disclaimer
+                };
+
                 return (
                   <>
                     <div ref={reportRef} className="bg-white text-slate-900 p-10 rounded-xl shadow-2xl max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
@@ -623,7 +589,19 @@ export default function MentalHealthAssessment() {
                     </div>
 
                     <div className="flex flex-col gap-4">
-                      <button onClick={downloadReport} className="w-full py-3 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 text-[#0b1120] font-medium hover:shadow-2xl hover:shadow-emerald-400/20 transition-all duration-300">
+                      <button onClick={async () => {
+                        const el = reportRef.current;
+                        if (!el) return;
+                        try {
+                          const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                          const imgData = canvas.toDataURL('image/png');
+                          const pdf = new jsPDF('p', 'mm', 'a4');
+                          const pdfWidth = pdf.internal.pageSize.getWidth();
+                          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                          pdf.save('Psychological_Assessment_Report.pdf');
+                        } catch (e) { console.error('PDF error:', e); }
+                      }} className="w-full py-3 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 text-[#0b1120] font-medium hover:shadow-2xl hover:shadow-emerald-400/20 transition-all duration-300">
                         {T.report.download}
                       </button>
                       <button onClick={reset} className="w-full py-3 rounded-full border border-slate-600/50 hover:border-emerald-400/50 transition-all duration-300 text-slate-300 font-light">
