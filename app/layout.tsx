@@ -1,21 +1,21 @@
-import './globals.css'
-import type { Metadata } from 'next'
+import './globals.css';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Mental Health & Personality Assessment',
-  description: 'A premium psychological screening and personality assessment tool.',
-}
+  title: 'Psychological Assessment & Diagnostic Suite',
+  description: 'Advanced Psychometric & Clinical Pattern Analytics Engine',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="bn">
-      <body className="antialiased bg-[#0b1120] text-slate-200 font-sans">
+    <html lang="en" className="dark">
+      <body className="antialiased min-h-screen selection:bg-indigo-500/30">
         {children}
       </body>
     </html>
-  )
+  );
 }
