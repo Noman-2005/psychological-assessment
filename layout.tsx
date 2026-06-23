@@ -2,8 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Mental Health Assessment',
-  description: 'A premium psychological screening tool for mental wellness.',
+  title: 'Mental Health & Personality Assessment',
+  description: 'A premium psychological screening and personality assessment tool.',
 }
 
 export default function RootLayout({
