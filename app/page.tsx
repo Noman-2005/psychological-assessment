@@ -102,7 +102,7 @@ const langData = {
       mhResult: "মানসিক স্বাস্থ্য স্ক্রীনিং ফলাফল",
       personalityResult: "ব্যক্তিত্ব প্রোফাইল (Mini-IPIP)",
       recommendation: "সুপারিশ",
-      disclaimer: "সতর্কীকরণ: এটি কোনো ক্লিনিক্যাল মনোবৈজ্ঞানিক রিপোর্ট নয়। এটি একটি স্ব-পরিচালিত স্ক্রীনিং টুল। এই রিপোর্টের ওপর ভিত্তি করে কোনো ওষুধ সেবন বা চিকিৎসা সিদ্ধান্ত নেওয়া যাবে না। মানসিক স্বাস্থ্য সংক্রান্ত যেকোনো জটিলতার ক্ষেত্রে অবিলম্বে একজন লাইসেন্সপ্রাপ্ত ক্লিনিক্যাল সাইকিয়াট্রিস্ট বা মানসিক স্বাস্থ্য বিশেষজ্ঞের পরামর্শ নিন। এই রিপোর্ট শুধুমাত্র তথ্য ও আত্ম-সচেতনতার উদ্দেশ্যে তৈরি।",
+      disclaimer: "সতর্কীকরণ: এটি কোনো ক্লিনিক্যাল মনোবৈজ্ঞানিক রিপোর্ট নয়। এটি একটি স্ব-পরিচালিত স্ক্রীনিং টুল। এই রিপোর্টের ওপর ভিত্তি করে কোনো ওষুধ সেবন বা চিকিৎসা সিদ্ধান্ত নেওয়া যাবে না। মানসিক স্বাস্থ্য সংক্রান্ত যেকোনো জটিলতার ক্ষেত্রে অবিলম্বে একজন লাইসেন্সপ্রাপ্ত ক্লিনিক্যাল সাইকিয়াট্রিস্ট বা মানসিক স্বাস্থ্য বিশেষজ্ঞের পরামর্শ নিন। এই রिपोर्ट শুধুমাত্র তথ্য ও আত্ম-সচেতনতার উদ্দেশ্যে তৈরি।",
       download: "রিপোর্ট ডাউনলোড করুন (PDF)"
     }
   }
@@ -110,31 +110,22 @@ const langData = {
 
 // 2. Personality Questions (Mini-IPIP - 20 Questions)
 const personalityQuestions = [
-  // Extraversion (1, 2R, 3, 4R)
   { id: 1, trait: "Extraversion", en: "I am the life of the party.", bn: "আমি যেকোনো অনুষ্ঠানের বা আড্ডার প্রাণকেন্দ্র হয়ে থাকি।", reverse: false },
   { id: 2, trait: "Extraversion", en: "I don't talk a lot.", bn: "আমি খুব একটা বেশি কথা বলি না।", reverse: true },
   { id: 3, trait: "Extraversion", en: "I talk to many new people at parties.", bn: "বিভিন্ন পার্টি বা সামাজিক অনুষ্ঠানে আমি অনেক নতুন নতুন মানুষের সাথে কথা বলি।", reverse: false },
   { id: 4, trait: "Extraversion", en: "I prefer to keep myself in the background.", bn: "আমি যেকোনো জায়গায় নিজেকে একটু গুটিয়ে বা ব্যাকগ্রাউন্ডে রাখতে পছন্দ করি।", reverse: true },
-  
-  // Agreeableness (5, 6R, 7, 8R)
   { id: 5, trait: "Agreeableness", en: "I easily understand others' feelings.", bn: "আমি অন্যের অনুভূতির বিষয়গুলো খুব সহজে বুঝতে পারি এবং সহানুভূতি জানাই।", reverse: false },
   { id: 6, trait: "Agreeableness", en: "I am not interested in other people's problems.", bn: "অন্য মানুষের ব্যক্তিগত সমস্যা বা জটিলতা নিয়ে আমার তেমন কোনো আগ্রহ নেই।", reverse: true },
   { id: 7, trait: "Agreeableness", en: "I feel others' emotions myself.", bn: "আমি চারপাশের মানুষের আবেগ বা কষ্ট নিজের ভেতর অনুভব করতে পারি।", reverse: false },
   { id: 8, trait: "Agreeableness", en: "I don't care much about others' needs.", bn: "অন্য মানুষদের নিয়ে বা তাদের সুবিধা-অসুবিধা নিয়ে আমি আসলেই খুব একটা মাথা ঘামাই না।", reverse: true },
-  
-  // Conscientiousness (9, 10R, 11, 12R)
   { id: 9, trait: "Conscientiousness", en: "I finish tasks immediately.", bn: "ঘরের বা অফিসের যেকোনো কাজ বা দায়িত্ব আমি ফেলে না রেখে সাথে সাথেই শেষ করি।", reverse: false },
   { id: 10, trait: "Conscientiousness", en: "I often forget to put things back in their place.", bn: "আমি প্রায়ই জিনিসপত্র নির্দিষ্ট জায়গায় গুছিয়ে রাখতে ভুলে যাই।", reverse: true },
   { id: 11, trait: "Conscientiousness", en: "I like to follow a disciplined routine.", bn: "আমি একটি সুশৃঙ্খল ও নিয়মতান্ত্রিক রুটিন মেনে চলতে পছন্দ করি।", reverse: false },
   { id: 12, trait: "Conscientiousness", en: "I often make a mess of things.", bn: "আমি প্রায় সময়ই সবকিছু এলোমেলো বা জগাখিচুড়ি পাকিয়ে ফেলি।", reverse: true },
-  
-  // Neuroticism (13, 14R, 15, 16R)
   { id: 13, trait: "Neuroticism", en: "I have frequent mood swings.", bn: "আমার খুব ঘনঘন বা হুটহাট মুড সুইং (মেজাজের পরিবর্তন) হয়।", reverse: false },
   { id: 14, trait: "Neuroticism", en: "I am mostly relaxed.", bn: "আমি অধিকাংশ সময়ই বেশ রিল্যাক্সড বা শান্ত মেজাজে থাকি।", reverse: true },
   { id: 15, trait: "Neuroticism", en: "I get upset easily over small things.", bn: "আমি খুব ছোটখাটো বা সামান্য বিষয়েই সহজে আপসেট বা মন খারাপ করে ফেলি।", reverse: false },
   { id: 16, trait: "Neuroticism", en: "I rarely feel sad or down.", bn: "আমি খুব কম সময়ই বিষণ্ণ বা মনমরা অনুভব করি।", reverse: true },
-  
-  // Openness (17, 18R, 19, 20R)
   { id: 17, trait: "Openness", en: "I have a vivid imagination.", bn: "আমার কল্পনাশক্তি অত্যন্ত প্রখর এবং চমৎকার।", reverse: false },
   { id: 18, trait: "Openness", en: "I am not interested in abstract ideas.", bn: "জটিল, তাত্ত্বিক বা বিমূর্ত আইডিয়া নিয়ে আমার কোনো আগ্রহ নেই।", reverse: true },
   { id: 19, trait: "Openness", en: "I often come up with new and great ideas.", bn: "আমার মাথায় প্রায়ই নতুন এবং চমৎকার সব আইডিয়া আসে।", reverse: false },
@@ -250,7 +241,7 @@ const exercises = {
 // 5. Main Component
 export default function MentalHealthAssessment() {
   const [lang, setLang] = useState('bn');
-  const [step, setStep] = useState(0); // 0: Welcome, 1: Select, 2: MH Quiz, 3: MH Result, 4: Personality Quiz, 5: Personality Result, 6: Exercises, 7: Final Report
+  const [step, setStep] = useState(0); 
   const [selectedMH, setSelectedMH] = useState(null);
   const [currentMHQ, setCurrentMHQ] = useState(0);
   const [mhScores, setMHScores] = useState({});
@@ -261,11 +252,10 @@ export default function MentalHealthAssessment() {
 
   const T = langData[lang];
 
-  // --- Mental Health Logic ---
   const handleMHAnswer = (score, label) => {
     setMHScores(p => ({ ...p, [label]: (p[label] || 0) + score }));
     if (currentMHQ + 1 < selectedMH.questions.length) setCurrentMHQ(c => c + 1);
-    else setStep(4); // Go to Personality Quiz
+    else setStep(4);
   };
 
   const calcMH = () => {
@@ -278,11 +268,10 @@ export default function MentalHealthAssessment() {
 
   const mhSeverity = calcMH();
 
-  // --- Personality Logic ---
   const handlePAnswer = (qId, value) => {
     setPersonalityAnswers(p => ({ ...p, [qId]: value }));
     if (currentPQ + 1 < personalityQuestions.length) setCurrentPQ(c => c + 1);
-    else setStep(5); // Go to Personality Result
+    else setStep(5);
   };
 
   const calculatePersonality = () => {
@@ -298,7 +287,7 @@ export default function MentalHealthAssessment() {
       const answer = personalityAnswers[q.id];
       if (answer !== undefined) {
         let score = answer;
-        if (q.reverse) score = 6 - score; // Reverse scoring (1->5, 2->4, 3->3, 4->2, 5->1)
+        if (q.reverse) score = 6 - score;
         traits[q.trait].sum += score;
         traits[q.trait].count += 1;
       }
@@ -313,7 +302,6 @@ export default function MentalHealthAssessment() {
 
   const personalityResult = step >= 5 ? calculatePersonality() : {};
 
-  // --- Generate Report Data ---
   const generateReport = () => {
     const date = new Date().toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', {
       year: 'numeric', month: 'long', day: 'numeric'
@@ -342,7 +330,6 @@ export default function MentalHealthAssessment() {
     };
   };
 
-  // --- Download PDF ---
   const downloadReport = async () => {
     const reportElement = reportRef.current;
     if (!reportElement) return;
@@ -365,7 +352,6 @@ export default function MentalHealthAssessment() {
     }
   };
 
-  // --- Reset ---
   const reset = () => {
     setStep(0);
     setSelectedMH(null);
@@ -376,17 +362,14 @@ export default function MentalHealthAssessment() {
     setShowEx(false);
   };
 
-  // --- Render ---
   return (
     <div className="min-h-screen bg-[#0b1120] text-slate-200 font-sans relative overflow-hidden selection:bg-emerald-400/30 selection:text-emerald-200">
       
-      {/* Premium Glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-2xl bg-[#0b1120]/60 border-b border-slate-800/60 px-8 py-5 flex justify-between items-center shadow-2xl">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-300 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -397,11 +380,9 @@ export default function MentalHealthAssessment() {
         <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} className="px-5 py-2 rounded-full border border-slate-700/50 hover:border-emerald-400/50 hover:bg-emerald-500/5 transition-all duration-300 text-sm font-light tracking-wider">{T.lang}</button>
       </header>
 
-      {/* Main Container */}
       <main className="flex items-center justify-center min-h-[75vh] p-6">
         <div className="w-full max-w-4xl bg-slate-900/40 backdrop-blur-xl border border-slate-800/30 rounded-3xl p-10 shadow-2xl relative overflow-hidden transition-all duration-700">
           
-          {/* ===== STEP 0: WELCOME ===== */}
           {step === 0 && (
             <div className="space-y-8 animate-fade-in-up text-center">
               <div className="w-20 h-20 mx-auto bg-gradient-to-br from-emerald-400 to-teal-300 rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-500/20">
@@ -429,7 +410,6 @@ export default function MentalHealthAssessment() {
             </div>
           )}
 
-          {/* ===== STEP 1: SELECT MH DISORDER ===== */}
           {step === 1 && (
             <div className="space-y-10 animate-fade-in-up">
               <h2 className="text-3xl font-light text-slate-200 tracking-wider text-center">{T.select}</h2>
@@ -446,7 +426,6 @@ export default function MentalHealthAssessment() {
             </div>
           )}
 
-          {/* ===== STEP 2: MH QUIZ ===== */}
           {step === 2 && selectedMH && (
             <div className="space-y-8 animate-fade-in">
               <div className="flex justify-between text-xs text-slate-500 tracking-widest">
@@ -471,7 +450,6 @@ export default function MentalHealthAssessment() {
             </div>
           )}
 
-          {/* ===== STEP 3: MH RESULT ===== */}
           {step === 3 && selectedMH && (
             <div className="space-y-8 animate-fade-in-up">
               <div className="p-6 bg-slate-800/30 rounded-2xl border border-slate-700/30 backdrop-blur-sm space-y-3">
@@ -496,7 +474,6 @@ export default function MentalHealthAssessment() {
             </div>
           )}
 
-          {/* ===== STEP 4: PERSONALITY QUIZ (Mini-IPIP) ===== */}
           {step === 4 && (
             <div className="space-y-8 animate-fade-in">
               <div className="flex justify-between text-xs text-slate-500 tracking-widest">
@@ -530,7 +507,6 @@ export default function MentalHealthAssessment() {
             </div>
           )}
 
-          {/* ===== STEP 5: PERSONALITY RESULT ===== */}
           {step === 5 && (
             <div className="space-y-8 animate-fade-in-up">
               <h3 className="text-2xl font-light text-slate-200">{T.personality.result}</h3>
@@ -539,10 +515,10 @@ export default function MentalHealthAssessment() {
                   <div key={trait} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/30 backdrop-blur-sm space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-slate-200">{T.personality.traits[trait]}</span>
-                      <span className="text-sm text-emerald-300">{score.toFixed(1)} / 5</span>
+                      <span className="text-sm text-emerald-300">{(score as number).toFixed(1)} / 5</span>
                     </div>
                     <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-300 rounded-full transition-all duration-500" style={{ width: `${(score / 5) * 100}%` }}></div>
+                      <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-300 rounded-full transition-all duration-500" style={{ width: `${((score as number) / 5) * 100}%` }}></div>
                     </div>
                     <p className="text-xs text-slate-400 font-light">
                       {score >= 4 ? (lang === 'bn' ? 'অত্যন্ত উচ্চ' : 'Very High') :
@@ -558,7 +534,6 @@ export default function MentalHealthAssessment() {
             </div>
           )}
 
-          {/* ===== STEP 6: EXERCISES ===== */}
           {step === 6 && selectedMH && showEx && (
             <div className="space-y-8 animate-fade-in-up">
               <h4 className="text-xl font-light text-teal-200 border-b border-slate-700/50 pb-3">{T.exercise}</h4>
@@ -572,34 +547,21 @@ export default function MentalHealthAssessment() {
             </div>
           )}
 
-          {/* ===== STEP 7: FINAL REPORT ===== */}
           {step === 7 && (
             <div className="space-y-8 animate-fade-in-up">
-              {/* Report Container */}
               <div ref={reportRef} className="bg-white text-slate-900 p-10 rounded-xl shadow-2xl max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
-                {/* Report Header */}
                 <div className="text-center border-b-4 border-emerald-600 pb-6 mb-8">
                   <h1 className="text-3xl font-bold tracking-tight text-slate-900">{T.report.title}</h1>
                   <p className="text-sm text-slate-500 mt-2">{T.report.generated}: {generateReport().generatedDate}</p>
                 </div>
 
-                {/* Client Info */}
                 <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
-                  <div>
-                    <span className="font-bold text-slate-700">{T.report.client}:</span> {generateReport().clientName}
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-700">{T.report.dob}:</span> {generateReport().dob}
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-700">{T.report.age}:</span> {generateReport().age}
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-700">{T.report.assessmentType}:</span> {generateReport().assessmentType}
-                  </div>
+                  <div><span className="font-bold text-slate-700">{T.report.client}:</span> {generateReport().clientName}</div>
+                  <div><span className="font-bold text-slate-700">{T.report.dob}:</span> {generateReport().dob}</div>
+                  <div><span className="font-bold text-slate-700">{T.report.age}:</span> {generateReport().age}</div>
+                  <div><span className="font-bold text-slate-700">{T.report.assessmentType}:</span> {generateReport().assessmentType}</div>
                 </div>
 
-                {/* Mental Health Result */}
                 <div className="mb-8">
                   <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.mhResult}</h2>
                   <div className={`p-4 rounded-lg ${mhSeverity === 'severe' ? 'bg-red-100 border border-red-300' : mhSeverity === 'moderate' ? 'bg-amber-100 border border-amber-300' : 'bg-emerald-100 border border-emerald-300'}`}>
@@ -607,7 +569,6 @@ export default function MentalHealthAssessment() {
                   </div>
                 </div>
 
-                {/* Personality Profile */}
                 <div className="mb-8">
                   <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.personalityResult}</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -615,23 +576,21 @@ export default function MentalHealthAssessment() {
                       <div key={trait} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-medium text-sm text-slate-700">{T.personality.traits[trait]}</span>
-                          <span className="text-sm text-slate-500">{score.toFixed(1)} / 5</span>
+                          <span className="text-sm text-slate-500">{(score as number).toFixed(1)} / 5</span>
                         </div>
                         <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${(score / 5) * 100}%` }}></div>
+                          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${((score as number) / 5) * 100}%` }}></div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Recommendation */}
                 <div className="mb-8">
                   <h2 className="text-xl font-semibold text-slate-800 border-b border-slate-300 pb-2 mb-4">{T.report.recommendation}</h2>
                   <p className="text-lg leading-relaxed">{generateReport().recommendation}</p>
                 </div>
 
-                {/* Disclaimer */}
                 <div className="mt-8 p-4 border-2 border-red-400 rounded-lg bg-red-50">
                   <h3 className="font-bold text-red-700 text-sm mb-2">⚠️ {lang === 'bn' ? 'সতর্কীকরণ' : 'Disclaimer'}</h3>
                   <p className="text-xs text-red-600 leading-relaxed">
@@ -640,7 +599,6 @@ export default function MentalHealthAssessment() {
                 </div>
               </div>
 
-              {/* Download Button */}
               <div className="flex flex-col gap-4">
                 <button onClick={downloadReport} className="w-full py-3 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 text-[#0b1120] font-medium hover:shadow-2xl hover:shadow-emerald-400/20 transition-all duration-300">
                   {T.report.download}
