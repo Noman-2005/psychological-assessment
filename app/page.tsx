@@ -1814,23 +1814,25 @@ export default function Home() {
 
             {/* Download & Retake */}
             <div className="flex flex-col md:flex-row gap-3 mt-6">
-              <button
-                onClick={() => {
-                  const content = generateReport(result, language);
-                  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `psychological-assessment-report-${Date.now()}.txt`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-                }}
-                className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all"
-              >
-                📄 {lang.results.downloadReport}
-              </button>
+             <button
+  onClick={() => {
+    if (result) {
+      const content = generateReport(result, language);
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `psychological-assessment-report-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  }}
+  className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02]"
+>
+  📄 {lang.results.downloadReport}
+</button>
               <button onClick={handleRetake} className="flex-1 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-medium transition-all">
                 {lang.results.retakeButton}
               </button>
@@ -1949,6 +1951,8 @@ export default function Home() {
 
 // ==================== REPORT GENERATOR ====================
 
+// ==================== REPORT GENERATOR ====================
+
 function generateReport(result: AssessmentResult, language: Language): string {
   const date = new Date(result.timestamp);
   const formattedDate = date.toLocaleDateString(language === "en" ? "en-US" : "bn-BD", {
@@ -1959,58 +1963,133 @@ function generateReport(result: AssessmentResult, language: Language): string {
     minute: "2-digit"
   });
 
-  const lines = [
-    "=".repeat(60),
-    language === "en" ? "PSYCHOLOGICAL ASSESSMENT REPORT" : "মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন",
-    "=".repeat(60),
-    "",
-    `${language === "en" ? "Date" : "তারিখ"}: ${formattedDate}`,
-    `${language === "en" ? "Total Questions" : "মোট প্রশ্ন"}: ${result.totalQuestions}`,
-    `${language === "en" ? "Questions Answered" : "উত্তরপ্রাপ্ত প্রশ্ন"}: ${result.answeredQuestions}`,
-    `${language === "en" ? "Risk Level" : "ঝুঁকির মাত্রা"}: ${result.riskLevel}`,
-    "",
-    "-".repeat(60),
-    language === "en" ? "SUMMARY" : "সারাংশ",
-    "-".repeat(60),
-    result.summary[language],
-    "",
-    "-".repeat(60),
-    language === "en" ? "IDENTIFIED SYMPTOM DOMAINS" : "শনাক্তকৃত লক্ষণ এলাকা",
-    "-".repeat(60),
-  ];
+  const lines: string[] = [];
 
-  if (result.findings.length > 0) {
-    result.findings.forEach(f => {
-      lines.push(`\n${f.condition}`);
-      lines.push(`  ${language === "en" ? "Severity" : "তীব্রতা"}: ${f.severity}`);
-      lines.push(`  ${language === "en" ? "Score" : "স্কোর"}: ${f.score}/${f.maxScore}`);
-      lines.push(`  ${f.description}`);
-      lines.push(`  ${language === "en" ? "Recommendation" : "সুপারিশ"}: ${f.recommendation}`);
-      if (f.exercises.length > 0) {
-        lines.push(`  ${language === "en" ? "Exercises" : "ব্যায়াম"}:`);
-        f.exercises.forEach(ex => {
-          lines.push(`    - ${ex.title[language]}`);
-          lines.push(`      ${ex.description[language]}`);
-        });
-      }
+  // ===== HEADER =====
+  lines.push("╔══════════════════════════════════════════════════════════════════════════════╗");
+  lines.push("║                                                                            ║");
+  lines.push("║                    PSYCHOLOGICAL ASSESSMENT REPORT                         ║");
+  lines.push("║                                                                            ║");
+  lines.push("╚══════════════════════════════════════════════════════════════════════════════╝");
+  lines.push("");
+  lines.push(`  📅 ${language === "en" ? "Date" : "তারিখ"}: ${formattedDate}`);
+  lines.push(`  📊 ${language === "en" ? "Risk Level" : "ঝুঁকির মাত্রা"}: ${result.riskLevel}`);
+  lines.push(`  📝 ${language === "en" ? "Questions Answered" : "উত্তরপ্রাপ্ত প্রশ্ন"}: ${result.answeredQuestions}/${result.totalQuestions}`);
+  lines.push("");
+  lines.push("  " + "─".repeat(70));
+  lines.push("");
+
+  // ===== SUMMARY =====
+  lines.push("  📋 " + (language === "en" ? "ASSESSMENT SUMMARY" : "মূল্যায়নের সারাংশ"));
+  lines.push("  " + "─".repeat(70));
+  lines.push("");
+  
+  // Wrap summary text properly
+  const summaryText = result.summary[language];
+  const summaryWords = summaryText.split(' ');
+  let summaryLine = "  ";
+  for (const word of summaryWords) {
+    if ((summaryLine + word).length > 72) {
+      lines.push(summaryLine);
+      summaryLine = "  " + word + " ";
+    } else {
+      summaryLine += word + " ";
+    }
+  }
+  if (summaryLine.trim().length > 0) {
+    lines.push(summaryLine);
+  }
+  lines.push("");
+
+  // ===== CRITICAL ALERTS =====
+  if (result.criticalFindings.length > 0) {
+    lines.push("");
+    lines.push("  ⚠️ " + (language === "en" ? "CRITICAL ALERTS - URGENT ATTENTION NEEDED" : "জরুরি সতর্কতা - তাৎক্ষণিক মনোযোগ প্রয়োজন"));
+    lines.push("  " + "─".repeat(70));
+    lines.push("");
+    result.criticalFindings.forEach(alert => {
+      lines.push(`  🔴 ${alert}`);
     });
-  } else {
-    lines.push(`\n${language === "en" ? "No significant concerns detected." : "কোনো উল্লেখযোগ্য উদ্বেগ শনাক্ত করা যায়নি।"}`);
+    lines.push("");
   }
 
-  lines.push(
-    "",
-    "-".repeat(60),
-    language === "en" ? "DISCLAIMER" : "দাবিত্যাগ",
-    "-".repeat(60),
-    language === "en" 
-      ? "This report is for informational purposes only and does not constitute medical advice. Never make any medication decisions based solely on this assessment. If you're experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately."
-      : "এই প্রতিবেদনটি শুধুমাত্র তথ্যগত উদ্দেশ্যে এবং এটি কোনো চিকিৎসা পরামর্শ নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।",
-    "",
-    "=".repeat(60),
-    language === "en" ? "Generated by Psychological Assessment System" : "মনস্তাত্ত্বিক মূল্যায়ন সিস্টেম দ্বারা উৎপন্ন",
-    "=".repeat(60)
-  );
+  // ===== FINDINGS =====
+  if (result.findings.length > 0) {
+    lines.push("");
+    lines.push("  🎯 " + (language === "en" ? "IDENTIFIED SYMPTOM DOMAINS" : "শনাক্তকৃত লক্ষণ এলাকা"));
+    lines.push("  " + "─".repeat(70));
+    lines.push("");
+
+    result.findings.forEach((finding, index) => {
+      const severitySymbol = finding.severity === "High" ? "🔴" : finding.severity === "Moderate" ? "🟡" : "🟢";
+      lines.push(`  ${severitySymbol} ${finding.condition}`);
+      lines.push(`     ${language === "en" ? "Severity" : "তীব্রতা"}: ${finding.severity}`);
+      lines.push(`     ${language === "en" ? "Score" : "স্কোর"}: ${finding.score}/${finding.maxScore}`);
+      lines.push(`     ${language === "en" ? "Description" : "বর্ণনা"}: ${finding.description}`);
+      lines.push(`     💡 ${language === "en" ? "Recommendation" : "সুপারিশ"}: ${finding.recommendation}`);
+      
+      // Exercises for this finding
+      if (finding.exercises.length > 0) {
+        lines.push(`     🧘 ${language === "en" ? "Recommended Exercises" : "প্রস্তাবিত ব্যায়াম"}:`);
+        finding.exercises.forEach(ex => {
+          lines.push(`        • ${ex.title[language]}`);
+          lines.push(`          ${ex.description[language]}`);
+          if (ex.steps) {
+            ex.steps[language].forEach((step, i) => {
+              lines.push(`          ${i + 1}) ${step}`);
+            });
+          }
+        });
+      }
+      
+      if (index < result.findings.length - 1) {
+        lines.push(`     ${"·".repeat(60)}`);
+      }
+      lines.push("");
+    });
+  } else {
+    lines.push("");
+    lines.push("  ✅ " + (language === "en" ? "No significant concerns detected." : "কোনো উল্লেখযোগ্য উদ্বেগ শনাক্ত করা যায়নি।"));
+    lines.push("");
+  }
+
+  // ===== DISCLAIMER =====
+  lines.push("");
+  lines.push("  " + "═".repeat(70));
+  lines.push("");
+  lines.push("  ⚠️ " + (language === "en" ? "DISCLAIMER" : "দাবিত্যাগ"));
+  lines.push("  " + "─".repeat(70));
+  lines.push("");
+  
+  const disclaimerText = language === "en" 
+    ? "This report is for informational purposes only and does not constitute medical advice. Never make any medication decisions based solely on this assessment. If you're experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately."
+    : "এই প্রতিবেদনটি শুধুমাত্র তথ্যগত উদ্দেশ্যে এবং এটি কোনো চিকিৎসা পরামর্শ নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।";
+  
+  const disclaimerWords = disclaimerText.split(' ');
+  let disclaimerLine = "  ";
+  for (const word of disclaimerWords) {
+    if ((disclaimerLine + word).length > 72) {
+      lines.push(disclaimerLine);
+      disclaimerLine = "  " + word + " ";
+    } else {
+      disclaimerLine += word + " ";
+    }
+  }
+  if (disclaimerLine.trim().length > 0) {
+    lines.push(disclaimerLine);
+  }
+  lines.push("");
+
+  // ===== FOOTER =====
+  lines.push("  " + "═".repeat(70));
+  lines.push("");
+  lines.push("  " + (language === "en" ? "Generated by Psychological Assessment System" : "মনস্তাত্ত্বিক মূল্যায়ন সিস্টেম দ্বারা উৎপন্ন"));
+  lines.push("  " + (language === "en" ? "© 2026 All Rights Reserved" : "© ২০২৬ সর্বস্বত্ব সংরক্ষিত"));
+  lines.push("  " + (language === "en" ? "For professional use only" : "শুধুমাত্র পেশাদার ব্যবহারের জন্য"));
+  lines.push("");
+  lines.push("╔══════════════════════════════════════════════════════════════════════════════╗");
+  lines.push("║                    END OF REPORT                                           ║");
+  lines.push("╚══════════════════════════════════════════════════════════════════════════════╝");
 
   return lines.join("\n");
 }
