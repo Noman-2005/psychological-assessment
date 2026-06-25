@@ -32,6 +32,76 @@ interface AssessmentResult {
   timestamp: string;
 }
 
+// ==================== SCIENTIFIC EXPLANATIONS ====================
+const scientificExplanations: Record<string, string> = {
+  "Depression-related symptoms": "Depression occurs when brain chemicals called neurotransmitters (serotonin, dopamine, and norepinephrine) become imbalanced. This affects mood regulation, sleep patterns, appetite, and motivation. Genetic factors, life events, and brain structure changes can all contribute to this condition.",
+  
+  "Anxiety-related symptoms": "Anxiety is caused by overactivation of the amygdala, the brain's fear center, and an imbalance in stress hormones (cortisol and adrenaline). This triggers the body's 'fight or flight' response even when no real threat exists, leading to excessive worry, physical tension, and restlessness.",
+  
+  "OCD-related symptoms": "OCD involves hyperactivity in the brain's orbital frontal cortex and basal ganglia, which are responsible for decision-making and error detection. This creates a 'brain lock' where intrusive thoughts (obsessions) get stuck and compulsions develop as an attempt to neutralize the anxiety.",
+  
+  "PTSD-related symptoms": "PTSD occurs when the brain's fear response system becomes stuck in an overactive state after a traumatic event. The amygdala remains hypervigilant while the hippocampus struggles to properly process and store the memory, causing flashbacks, nightmares, and avoidance behaviors.",
+  
+  "Psychosis-related symptoms": "Psychosis involves disruptions in brain dopamine signaling pathways. This affects how the brain processes information, leading to unusual perceptions (hallucinations) and beliefs (delusions). The brain struggles to distinguish between internal thoughts and external reality.",
+  
+  "Borderline Personality-related symptoms": "BPD involves hypersensitivity in the emotional regulation centers of the brain, particularly the amygdala and prefrontal cortex. This leads to intense emotional reactions, difficulty calming down, and impulsive behaviors in response to perceived abandonment or rejection.",
+  
+  "Narcissistic Personality-related symptoms": "Narcissistic traits involve a combination of genetic predisposition, childhood experiences, and brain differences in empathy centers. These lead to an inflated self-image as a defense mechanism against deep-seated insecurities and difficulty understanding others' perspectives.",
+  
+  "Eating Disorder-related symptoms": "Eating disorders involve disruptions in brain reward and appetite centers, combined with distorted body image processing. The brain's reward system becomes misaligned, making controlling food intake feel like a way to manage emotions and self-worth.",
+  
+  "Maladaptive Daydreaming": "Maladaptive daydreaming occurs when the brain's default mode network, responsible for daydreaming and mind-wandering, becomes overactive. This creates a dopamine cycle where fantasy becomes a primary source of reward, making it difficult to focus on real-life activities."
+};
+
+// ==================== COMMON SYMPTOMS ====================
+const commonSymptoms: Record<string, string[]> = {
+  "Depression-related symptoms": [
+    "Persistent sadness, emptiness, or low mood",
+    "Loss of interest or pleasure in activities once enjoyed",
+    "Fatigue, low energy, or feeling slowed down"
+  ],
+  "Anxiety-related symptoms": [
+    "Excessive worry about everyday situations",
+    "Restlessness or feeling on edge",
+    "Difficulty concentrating or mind going blank"
+  ],
+  "OCD-related symptoms": [
+    "Recurring, unwanted thoughts (obsessions)",
+    "Repeated actions or rituals (compulsions)",
+    "Intense anxiety if rituals are not performed"
+  ],
+  "PTSD-related symptoms": [
+    "Flashbacks or nightmares of traumatic events",
+    "Avoiding reminders of the trauma",
+    "Hypervigilance or being easily startled"
+  ],
+  "Psychosis-related symptoms": [
+    "Hearing voices or seeing things others don't",
+    "Unusual or unrealistic beliefs (delusions)",
+    "Disorganized speech or thinking"
+  ],
+  "Borderline Personality-related symptoms": [
+    "Intense, unstable relationships",
+    "Sudden mood swings and intense anger",
+    "Fear of abandonment and feelings of emptiness"
+  ],
+  "Narcissistic Personality-related symptoms": [
+    "Inflated sense of self-importance",
+    "Need for excessive admiration",
+    "Lack of empathy for others"
+  ],
+  "Eating Disorder-related symptoms": [
+    "Preoccupation with weight and body shape",
+    "Severe restriction of food intake",
+    "Binge eating followed by purging behaviors"
+  ],
+  "Maladaptive Daydreaming": [
+    "Spending hours lost in fantasy worlds",
+    "Difficulty stopping daydreams",
+    "Interferes with daily activities and responsibilities"
+  ]
+};
+
 // ==================== MAIN COMPONENT ====================
 export default function ReportPage() {
   const router = useRouter();
@@ -45,22 +115,19 @@ export default function ReportPage() {
     console.log("🔍 Loading report data...");
     
     try {
-      // 1. Try localStorage first
       let data = localStorage.getItem("reportData");
-      console.log("📦 From localStorage:", data ? "Found" : "Not found");
       
-      // 2. If not, try sessionStorage
       if (!data) {
         data = sessionStorage.getItem("reportData");
-        console.log("📦 From sessionStorage:", data ? "Found" : "Not found");
       }
       
       if (data) {
         const parsed = JSON.parse(data);
-        console.log("✅ Parsed data:", parsed);
+        console.log("✅ Full data structure:", parsed);
+        console.log("✅ Findings count:", parsed.findings?.length || 0);
         setResult(parsed);
       } else {
-        console.log("❌ No data found in any storage");
+        console.log("❌ No data found");
       }
     } catch (error) {
       console.error("❌ Error loading report data:", error);
@@ -69,99 +136,27 @@ export default function ReportPage() {
     setLoading(false);
   }, []);
 
-  // ===== SAVE DATA TO SESSIONSTORAGE ON COMPONENT MOUNT =====
-  useEffect(() => {
-    // If data is in localStorage but not sessionStorage, copy it
-    if (typeof window !== "undefined") {
-      const data = localStorage.getItem("reportData");
-      if (data && !sessionStorage.getItem("reportData")) {
-        sessionStorage.setItem("reportData", data);
-        console.log("📦 Copied data from localStorage to sessionStorage");
-      }
-    }
-  }, []);
-
   // ===== GET SCIENTIFIC EXPLANATION =====
   const getScientificExplanation = (condition: string): string => {
-    const explanations: Record<string, string> = {
-      "Depression-related symptoms": "Depression occurs when brain chemicals called neurotransmitters (serotonin, dopamine, and norepinephrine) become imbalanced. This affects mood regulation, sleep patterns, appetite, and motivation. Genetic factors, life events, and brain structure changes can all contribute to this condition.",
-      
-      "Anxiety-related symptoms": "Anxiety is caused by overactivation of the amygdala, the brain's fear center, and an imbalance in stress hormones (cortisol and adrenaline). This triggers the body's 'fight or flight' response even when no real threat exists, leading to excessive worry, physical tension, and restlessness.",
-      
-      "OCD-related symptoms": "OCD involves hyperactivity in the brain's orbital frontal cortex and basal ganglia, which are responsible for decision-making and error detection. This creates a 'brain lock' where intrusive thoughts (obsessions) get stuck and compulsions develop as an attempt to neutralize the anxiety.",
-      
-      "PTSD-related symptoms": "PTSD occurs when the brain's fear response system becomes stuck in an overactive state after a traumatic event. The amygdala remains hypervigilant while the hippocampus struggles to properly process and store the memory, causing flashbacks, nightmares, and avoidance behaviors.",
-      
-      "Psychosis-related symptoms": "Psychosis involves disruptions in brain dopamine signaling pathways. This affects how the brain processes information, leading to unusual perceptions (hallucinations) and beliefs (delusions). The brain struggles to distinguish between internal thoughts and external reality.",
-      
-      "Borderline Personality-related symptoms": "BPD involves hypersensitivity in the emotional regulation centers of the brain, particularly the amygdala and prefrontal cortex. This leads to intense emotional reactions, difficulty calming down, and impulsive behaviors in response to perceived abandonment or rejection.",
-      
-      "Narcissistic Personality-related symptoms": "Narcissistic traits involve a combination of genetic predisposition, childhood experiences, and brain differences in empathy centers. These lead to an inflated self-image as a defense mechanism against deep-seated insecurities and difficulty understanding others' perspectives.",
-      
-      "Eating Disorder-related symptoms": "Eating disorders involve disruptions in brain reward and appetite centers, combined with distorted body image processing. The brain's reward system becomes misaligned, making controlling food intake feel like a way to manage emotions and self-worth.",
-      
-      "Maladaptive Daydreaming": "Maladaptive daydreaming occurs when the brain's default mode network, responsible for daydreaming and mind-wandering, becomes overactive. This creates a dopamine cycle where fantasy becomes a primary source of reward, making it difficult to focus on real-life activities."
-    };
-
-    for (const [key, value] of Object.entries(explanations)) {
+    // Try exact match first
+    if (scientificExplanations[condition]) {
+      return scientificExplanations[condition];
+    }
+    // Try partial match
+    for (const [key, value] of Object.entries(scientificExplanations)) {
       if (condition.includes(key.split(" ")[0]) || condition === key) {
         return value;
       }
     }
-    return "This condition involves complex interactions between brain chemistry, neural pathways, and environmental factors. Professional evaluation can provide more detailed insights.";
+    return condition + " involves complex interactions between brain chemistry, neural pathways, and environmental factors. Professional evaluation can provide more detailed insights.";
   };
 
-  // ===== GET SYMPTOMS =====
+  // ===== GET COMMON SYMPTOMS =====
   const getCommonSymptoms = (condition: string): string[] => {
-    const symptoms: Record<string, string[]> = {
-      "Depression-related symptoms": [
-        "Persistent sadness, emptiness, or low mood",
-        "Loss of interest or pleasure in activities once enjoyed",
-        "Fatigue, low energy, or feeling slowed down"
-      ],
-      "Anxiety-related symptoms": [
-        "Excessive worry about everyday situations",
-        "Restlessness or feeling on edge",
-        "Difficulty concentrating or mind going blank"
-      ],
-      "OCD-related symptoms": [
-        "Recurring, unwanted thoughts (obsessions)",
-        "Repeated actions or rituals (compulsions)",
-        "Intense anxiety if rituals are not performed"
-      ],
-      "PTSD-related symptoms": [
-        "Flashbacks or nightmares of traumatic events",
-        "Avoiding reminders of the trauma",
-        "Hypervigilance or being easily startled"
-      ],
-      "Psychosis-related symptoms": [
-        "Hearing voices or seeing things others don't",
-        "Unusual or unrealistic beliefs (delusions)",
-        "Disorganized speech or thinking"
-      ],
-      "Borderline Personality-related symptoms": [
-        "Intense, unstable relationships",
-        "Sudden mood swings and intense anger",
-        "Fear of abandonment and feelings of emptiness"
-      ],
-      "Narcissistic Personality-related symptoms": [
-        "Inflated sense of self-importance",
-        "Need for excessive admiration",
-        "Lack of empathy for others"
-      ],
-      "Eating Disorder-related symptoms": [
-        "Preoccupation with weight and body shape",
-        "Severe restriction of food intake",
-        "Binge eating followed by purging behaviors"
-      ],
-      "Maladaptive Daydreaming": [
-        "Spending hours lost in fantasy worlds",
-        "Difficulty stopping daydreams",
-        "Interferes with daily activities and responsibilities"
-      ]
-    };
-
-    for (const [key, value] of Object.entries(symptoms)) {
+    if (commonSymptoms[condition]) {
+      return commonSymptoms[condition];
+    }
+    for (const [key, value] of Object.entries(commonSymptoms)) {
       if (condition.includes(key.split(" ")[0]) || condition === key) {
         return value;
       }
@@ -267,7 +262,6 @@ export default function ReportPage() {
           <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
           <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
           <p style={{ color: "#666", marginBottom: 8 }}>Please complete the assessment first.</p>
-          <p style={{ color: "#999", fontSize: 12, marginBottom: 16 }}>Make sure you click "View Report" from the results page.</p>
           <button
             onClick={() => router.push("/")}
             style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 24px", borderRadius: 4, fontSize: 14, cursor: "pointer" }}
@@ -426,12 +420,24 @@ export default function ReportPage() {
               <h2 style={{ marginTop: 24 }}>{language === "en" ? "Identified Concerns" : "শনাক্তকৃত উদ্বেগ"}</h2>
               
               {result.findings.map((finding, index) => {
-                const severityColor = finding.severity === "High" ? "#cc0000" : finding.severity === "Moderate" ? "#cc8800" : "#2d7d2d";
-                const symptoms = getCommonSymptoms(finding.condition);
-                const explanation = getScientificExplanation(finding.condition);
+                // GET CONDITION NAME - FIX FOR MISSING DATA
+                const conditionName = finding.condition || "Unknown Condition";
+                
+                // GET SEVERITY
+                const severity = finding.severity || "Low";
+                const severityColor = severity === "High" ? "#cc0000" : severity === "Moderate" ? "#cc8800" : "#2d7d2d";
+                
+                // GET EXPLANATION
+                const explanation = getScientificExplanation(conditionName);
+                
+                // GET SYMPTOMS
+                const symptoms = getCommonSymptoms(conditionName);
+                
+                // GET RECOMMENDATION
+                const recommendation = finding.recommendation || "Please consult a mental health professional for personalized guidance.";
                 
                 return (
-                  <div key={index} className={`finding-block ${finding.severity.toLowerCase()}`} style={{ 
+                  <div key={index} className={`finding-block ${severity.toLowerCase()}`} style={{ 
                     background: "#fafafa", 
                     padding: "14px 16px", 
                     margin: "12px 0", 
@@ -439,14 +445,14 @@ export default function ReportPage() {
                     borderRadius: "0 4px 4px 0"
                   }}>
                     <h3 style={{ margin: "0 0 4px 0", fontSize: "12pt", fontWeight: 700 }}>
-                      {index + 1}. {finding.condition}
-                      <span className={getBadgeClass(finding.severity)} style={{ marginLeft: 10, padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600, display: "inline-block" }}>
-                        {finding.severity}
+                      {index + 1}. {conditionName}
+                      <span className={getBadgeClass(severity)} style={{ marginLeft: 10, padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600, display: "inline-block" }}>
+                        {severity}
                       </span>
                     </h3>
                     
                     <p style={{ margin: "2px 0 6px 0", fontSize: "10pt", color: "#555" }}>
-                      <strong>{language === "en" ? "Score" : "স্কোর"}:</strong> {finding.score}/{finding.maxScore}
+                      <strong>{language === "en" ? "Score" : "স্কোর"}:</strong> {finding.score || 0}/{finding.maxScore || 0}
                     </p>
 
                     {/* Scientific Explanation */}
@@ -469,7 +475,7 @@ export default function ReportPage() {
                     <h4 style={{ fontFamily: "'Arial', sans-serif", fontSize: "9.5pt", fontWeight: 600, color: "#1a1a1a", margin: "8px 0 4px 0" }}>
                       {lang.recommendations}
                     </h4>
-                    <p style={{ margin: "0 0 4px 0", fontSize: "10.5pt", lineHeight: 1.6 }}>{finding.recommendation}</p>
+                    <p style={{ margin: "0 0 4px 0", fontSize: "10.5pt", lineHeight: 1.6 }}>{recommendation}</p>
 
                     {/* Exercises */}
                     {finding.exercises && finding.exercises.length > 0 && (
