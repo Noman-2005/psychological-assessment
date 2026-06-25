@@ -1786,8 +1786,12 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-3 mt-6">
               <button
   onClick={() => {
-    localStorage.setItem('reportData', JSON.stringify(result));
-    router.push('/report');
+    if (result) {
+      // Save the result data to localStorage
+      localStorage.setItem('reportData', JSON.stringify(result));
+      // Navigate to the report page
+      router.push('/report');
+    }
   }}
   className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02] text-center"
 >

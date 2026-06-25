@@ -4,6 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 // ==================== TYPES ====================
+interface Exercise {
+  id: string;
+  title: { en: string; bn: string };
+  description: { en: string; bn: string };
+  steps?: { en: string[]; bn: string[] };
+  category: string;
+}
+
 interface Finding {
   condition: string;
   severity: "Low" | "Mild" | "Moderate" | "High";
@@ -12,14 +20,6 @@ interface Finding {
   description: string;
   recommendation: string;
   exercises: Exercise[];
-}
-
-interface Exercise {
-  id: string;
-  title: { en: string; bn: string };
-  description: { en: string; bn: string };
-  steps?: { en: string[]; bn: string[] };
-  category: string;
 }
 
 interface AssessmentResult {
@@ -40,27 +40,115 @@ export default function ReportPage() {
   const [language, setLanguage] = useState<"en" | "bn">("en");
   const printRef = useRef<HTMLDivElement>(null);
 
+  // ===== LOAD DATA FROM LOCALSTORAGE =====
   useEffect(() => {
-    // Try to get data from localStorage
-    const data = localStorage.getItem("reportData");
-    console.log("Raw data from localStorage:", data); // Debug log
-    
-    if (data) {
-      try {
+    try {
+      const data = localStorage.getItem("reportData");
+      console.log("🔍 Raw data from localStorage:", data);
+      
+      if (data) {
         const parsed = JSON.parse(data);
-        console.log("Parsed data:", parsed); // Debug log
+        console.log("✅ Parsed data:", parsed);
         setResult(parsed);
-        // Don't remove immediately - keep it for the report
-        // localStorage.removeItem("reportData");
-      } catch (e) {
-        console.error("Error parsing report data:", e);
+      } else {
+        console.log("❌ No data found in localStorage");
       }
-    } else {
-      console.log("No data found in localStorage");
+    } catch (error) {
+      console.error("❌ Error loading report data:", error);
     }
     setLoading(false);
   }, []);
 
+  // ===== GET SCIENTIFIC EXPLANATION FOR EACH DISORDER =====
+  const getScientificExplanation = (condition: string): string => {
+    const explanations: Record<string, string> = {
+      "Depression-related symptoms": "Depression occurs when brain chemicals called neurotransmitters (serotonin, dopamine, and norepinephrine) become imbalanced. This affects mood regulation, sleep patterns, appetite, and motivation. Genetic factors, life events, and brain structure changes can all contribute to this condition.",
+      
+      "Anxiety-related symptoms": "Anxiety is caused by overactivation of the amygdala, the brain's fear center, and an imbalance in stress hormones (cortisol and adrenaline). This triggers the body's 'fight or flight' response even when no real threat exists, leading to excessive worry, physical tension, and restlessness.",
+      
+      "OCD-related symptoms": "OCD involves hyperactivity in the brain's orbital frontal cortex and basal ganglia, which are responsible for decision-making and error detection. This creates a 'brain lock' where intrusive thoughts (obsessions) get stuck and compulsions develop as an attempt to neutralize the anxiety.",
+      
+      "PTSD-related symptoms": "PTSD occurs when the brain's fear response system becomes stuck in an overactive state after a traumatic event. The amygdala remains hypervigilant while the hippocampus struggles to properly process and store the memory, causing flashbacks, nightmares, and avoidance behaviors.",
+      
+      "Psychosis-related symptoms": "Psychosis involves disruptions in brain dopamine signaling pathways. This affects how the brain processes information, leading to unusual perceptions (hallucinations) and beliefs (delusions). The brain struggles to distinguish between internal thoughts and external reality.",
+      
+      "Borderline Personality-related symptoms": "BPD involves hypersensitivity in the emotional regulation centers of the brain, particularly the amygdala and prefrontal cortex. This leads to intense emotional reactions, difficulty calming down, and impulsive behaviors in response to perceived abandonment or rejection.",
+      
+      "Narcissistic Personality-related symptoms": "Narcissistic traits involve a combination of genetic predisposition, childhood experiences, and brain differences in empathy centers. These lead to an inflated self-image as a defense mechanism against deep-seated insecurities and difficulty understanding others' perspectives.",
+      
+      "Eating Disorder-related symptoms": "Eating disorders involve disruptions in brain reward and appetite centers, combined with distorted body image processing. The brain's reward system becomes misaligned, making controlling food intake feel like a way to manage emotions and self-worth.",
+      
+      "Maladaptive Daydreaming": "Maladaptive daydreaming occurs when the brain's default mode network, responsible for daydreaming and mind-wandering, becomes overactive. This creates a dopamine cycle where fantasy becomes a primary source of reward, making it difficult to focus on real-life activities."
+    };
+
+    // Find matching explanation
+    for (const [key, value] of Object.entries(explanations)) {
+      if (condition.includes(key.split(" ")[0]) || condition === key) {
+        return value;
+      }
+    }
+    return "This condition involves complex interactions between brain chemistry, neural pathways, and environmental factors. Professional evaluation can provide more detailed insights.";
+  };
+
+  // ===== GET SYMPTOMS FOR EACH DISORDER =====
+  const getCommonSymptoms = (condition: string): string[] => {
+    const symptoms: Record<string, string[]> = {
+      "Depression-related symptoms": [
+        "Persistent sadness, emptiness, or low mood",
+        "Loss of interest or pleasure in activities once enjoyed",
+        "Fatigue, low energy, or feeling slowed down"
+      ],
+      "Anxiety-related symptoms": [
+        "Excessive worry about everyday situations",
+        "Restlessness or feeling on edge",
+        "Difficulty concentrating or mind going blank"
+      ],
+      "OCD-related symptoms": [
+        "Recurring, unwanted thoughts (obsessions)",
+        "Repeated actions or rituals (compulsions)",
+        "Intense anxiety if rituals are not performed"
+      ],
+      "PTSD-related symptoms": [
+        "Flashbacks or nightmares of traumatic events",
+        "Avoiding reminders of the trauma",
+        "Hypervigilance or being easily startled"
+      ],
+      "Psychosis-related symptoms": [
+        "Hearing voices or seeing things others don't",
+        "Unusual or unrealistic beliefs (delusions)",
+        "Disorganized speech or thinking"
+      ],
+      "Borderline Personality-related symptoms": [
+        "Intense, unstable relationships",
+        "Sudden mood swings and intense anger",
+        "Fear of abandonment and feelings of emptiness"
+      ],
+      "Narcissistic Personality-related symptoms": [
+        "Inflated sense of self-importance",
+        "Need for excessive admiration",
+        "Lack of empathy for others"
+      ],
+      "Eating Disorder-related symptoms": [
+        "Preoccupation with weight and body shape",
+        "Severe restriction of food intake",
+        "Binge eating followed by purging behaviors"
+      ],
+      "Maladaptive Daydreaming": [
+        "Spending hours lost in fantasy worlds",
+        "Difficulty stopping daydreams",
+        "Interferes with daily activities and responsibilities"
+      ]
+    };
+
+    for (const [key, value] of Object.entries(symptoms)) {
+      if (condition.includes(key.split(" ")[0]) || condition === key) {
+        return value;
+      }
+    }
+    return ["Varies based on individual experience", "Professional evaluation recommended"];
+  };
+
+  // ===== PDF PRINT HANDLER =====
   const handlePrint = () => {
     if (!printRef.current) return;
 
@@ -84,28 +172,24 @@ export default function ReportPage() {
           .meta-label { font-family: 'Arial', sans-serif; font-size: 8.5pt; font-weight: 600; color: #1a1a1a; margin-bottom: 1px; }
           .meta-value { font-size: 10.5pt; color: #222; }
           h2 { font-family: 'Arial', sans-serif; font-size: 12pt; font-weight: 700; color: #1a1a1a; margin: 18px 0 7px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
-          h3 { font-family: 'Arial', sans-serif; font-size: 10.5pt; font-weight: 600; color: #1a1a1a; margin: 12px 0 5px; }
+          h3 { font-family: 'Arial', sans-serif; font-size: 10.5pt; font-weight: 600; color: #1a1a1a; margin: 14px 0 5px; }
+          h4 { font-family: 'Arial', sans-serif; font-size: 9.5pt; font-weight: 600; color: #1a1a1a; margin: 10px 0 4px; }
           p, li { font-size: 11pt; line-height: 1.65; color: #222; }
-          ul, ol { padding-left: 20px; margin: 6px 0; }
-          li { margin-bottom: 3px; }
-          .severity-high { color: #cc0000; font-weight: 600; }
-          .severity-moderate { color: #cc8800; font-weight: 600; }
-          .severity-mild { color: #2d7d2d; font-weight: 600; }
-          .severity-low { color: #2d7d2d; font-weight: 600; }
-          .table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-          .table th { background: #f0f0f0; font-family: 'Arial', sans-serif; font-size: 9pt; font-weight: 600; padding: 6px 10px; border: 1px solid #ccc; text-align: left; }
-          .table td { padding: 6px 10px; border: 1px solid #ccc; font-size: 10.5pt; }
-          .disclaimer { margin-top: 24px; padding: 12px 16px; background: #f8f8f8; border-left: 3px solid #cc0000; font-size: 9.5pt; color: #555; line-height: 1.6; }
-          .footer { text-align: center; font-family: 'Arial', sans-serif; font-size: 8pt; color: #999; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
+          ul, ol { padding-left: 20px; margin: 4px 0; }
+          li { margin-bottom: 2px; }
           .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 9pt; font-weight: 600; font-family: 'Arial', sans-serif; }
           .badge-high { background: #ffebee; color: #cc0000; }
           .badge-moderate { background: #fff3e0; color: #cc8800; }
           .badge-mild { background: #e8f5e9; color: #2d7d2d; }
           .badge-low { background: #e8f5e9; color: #2d7d2d; }
-          .finding-block { background: #fafafa; padding: 12px 16px; margin: 8px 0; border-left: 3px solid #1a1a1a; }
+          .finding-block { background: #fafafa; padding: 14px 16px; margin: 10px 0; border-left: 4px solid #1a1a1a; }
           .finding-block.high { border-left-color: #cc0000; }
           .finding-block.moderate { border-left-color: #cc8800; }
           .finding-block.mild { border-left-color: #2d7d2d; }
+          .disclaimer { margin-top: 24px; padding: 12px 16px; background: #f8f8f8; border-left: 3px solid #cc0000; font-size: 9.5pt; color: #555; line-height: 1.6; }
+          .footer { text-align: center; font-family: 'Arial', sans-serif; font-size: 8pt; color: #999; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
+          .critical-alert { background: #ffebee; padding: 12px 16px; margin: 10px 0; border-left: 4px solid #cc0000; }
+          .critical-alert p { color: #cc0000; font-weight: 600; margin: 0; }
         </style>
       </head>
       <body>
@@ -120,109 +204,7 @@ export default function ReportPage() {
     }, 600);
   };
 
-  if (loading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: "#8b0000" }}>Loading Report...</div>
-          <div style={{ marginTop: 8, color: "#666" }}>Please wait</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!result) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
-        <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", maxWidth: 500 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
-          <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
-          <p style={{ color: "#666", marginBottom: 16 }}>Please complete the assessment first.</p>
-          <button
-            onClick={() => router.push("/")}
-            style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 24px", borderRadius: 4, fontSize: 14, cursor: "pointer" }}
-          >
-            Go to Assessment
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const t = {
-    en: {
-      title: "Automated Confidential Psychological Assessment Report",
-      assessmentDate: "Assessment Date",
-      reportId: "Report ID",
-      riskLevel: "Risk Level",
-      questionsAnswered: "Questions Answered",
-      summary: "Assessment Summary",
-      symptomDomains: "Symptom Domains",
-      domain: "Domain",
-      severity: "Severity",
-      score: "Score",
-      status: "Status",
-      detailedFindings: "Detailed Findings",
-      scientificExplanation: "Scientific Explanation",
-      recommendations: "Recommendations",
-      recommendedInterventions: "Recommended Interventions",
-      disclaimer: "Disclaimer",
-      disclaimerText: "This is an automated screening report for informational purposes only. It does not constitute a medical diagnosis. Never make any medication decisions based solely on this assessment. If you are experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately.",
-      downloadPdf: "⬇ Download PDF",
-      backToAssessment: "← Back to Assessment"
-    },
-    bn: {
-      title: "স্বয়ংক্রিয় গোপনীয় মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন",
-      assessmentDate: "মূল্যায়নের তারিখ",
-      reportId: "প্রতিবেদন আইডি",
-      riskLevel: "ঝুঁকির মাত্রা",
-      questionsAnswered: "উত্তরপ্রাপ্ত প্রশ্ন",
-      summary: "মূল্যায়নের সারাংশ",
-      symptomDomains: "লক্ষণ এলাকা",
-      domain: "এলাকা",
-      severity: "তীব্রতা",
-      score: "স্কোর",
-      status: "অবস্থা",
-      detailedFindings: "বিস্তারিত ফলাফল",
-      scientificExplanation: "বৈজ্ঞানিক ব্যাখ্যা",
-      recommendations: "সুপারিশ",
-      recommendedInterventions: "প্রস্তাবিত হস্তক্ষেপ",
-      disclaimer: "দাবিত্যাগ",
-      disclaimerText: "এটি একটি স্বয়ংক্রিয় স্ক্রীনিং প্রতিবেদন যা শুধুমাত্র তথ্যগত উদ্দেশ্যে। এটি কোনো চিকিৎসা নির্ণয় নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।",
-      downloadPdf: "⬇ পিডিএফ ডাউনলোড করুন",
-      backToAssessment: "← মূল্যায়নে ফিরে যান"
-    }
-  };
-
-  const lang = t[language];
-
-  const getSeverityClass = (severity: string) => {
-    switch (severity) {
-      case "High": return "severity-high";
-      case "Moderate": return "severity-moderate";
-      case "Mild": return "severity-mild";
-      default: return "severity-low";
-    }
-  };
-
-  const getBadgeClass = (severity: string) => {
-    switch (severity) {
-      case "High": return "badge-high";
-      case "Moderate": return "badge-moderate";
-      case "Mild": return "badge-mild";
-      default: return "badge-low";
-    }
-  };
-
-  const getStatusText = (severity: string) => {
-    switch (severity) {
-      case "High": return "Requires Immediate Attention";
-      case "Moderate": return "Monitor Closely";
-      case "Mild": return "Mild Concern";
-      default: return "Low Concern";
-    }
-  };
-
+  // ===== FORMAT DATE =====
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleDateString("en-US", {
@@ -234,9 +216,85 @@ export default function ReportPage() {
     });
   };
 
-  // Debug log to see what data we have
-  console.log("Result data in render:", result);
+  // ===== BADGE CLASS =====
+  const getBadgeClass = (severity: string) => {
+    switch (severity) {
+      case "High": return "badge-high";
+      case "Moderate": return "badge-moderate";
+      case "Mild": return "badge-mild";
+      default: return "badge-low";
+    }
+  };
 
+  // ===== LOADING STATE =====
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "#8b0000" }}>Loading Report...</div>
+          <div style={{ marginTop: 8, color: "#666" }}>Please wait</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== NO DATA STATE =====
+  if (!result || !result.findings || result.findings.length === 0) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
+        <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", maxWidth: 500 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
+          <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
+          <p style={{ color: "#666", marginBottom: 16 }}>Please complete the assessment first.</p>
+          <p style={{ color: "#999", fontSize: 12, marginBottom: 16 }}>Redirecting to assessment...</p>
+          <button
+            onClick={() => router.push("/")}
+            style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 24px", borderRadius: 4, fontSize: 14, cursor: "pointer" }}
+          >
+            Go to Assessment
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== TRANSLATIONS =====
+  const t = {
+    en: {
+      title: "Automated Confidential Psychological Assessment Report",
+      assessmentDate: "Assessment Date",
+      reportId: "Report ID",
+      riskLevel: "Risk Level",
+      questionsAnswered: "Questions Answered",
+      summary: "Summary",
+      scientificExplanation: "Scientific Explanation",
+      commonSymptoms: "Common Symptoms",
+      recommendations: "Recommendations",
+      disclaimer: "Disclaimer",
+      disclaimerText: "This is an automated screening report for informational purposes only. It does not constitute a medical diagnosis. Never make any medication decisions based solely on this assessment. If you are experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately.",
+      downloadPdf: "⬇ Download PDF",
+      backToAssessment: "← Back to Assessment"
+    },
+    bn: {
+      title: "স্বয়ংক্রিয় গোপনীয় মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন",
+      assessmentDate: "মূল্যায়নের তারিখ",
+      reportId: "প্রতিবেদন আইডি",
+      riskLevel: "ঝুঁকির মাত্রা",
+      questionsAnswered: "উত্তরপ্রাপ্ত প্রশ্ন",
+      summary: "সারাংশ",
+      scientificExplanation: "বৈজ্ঞানিক ব্যাখ্যা",
+      commonSymptoms: "সাধারণ লক্ষণ",
+      recommendations: "সুপারিশ",
+      disclaimer: "দাবিত্যাগ",
+      disclaimerText: "এটি একটি স্বয়ংক্রিয় স্ক্রীনিং প্রতিবেদন যা শুধুমাত্র তথ্যগত উদ্দেশ্যে। এটি কোনো চিকিৎসা নির্ণয় নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।",
+      downloadPdf: "⬇ পিডিএফ ডাউনলোড করুন",
+      backToAssessment: "← মূল্যায়নে ফিরে যান"
+    }
+  };
+
+  const lang = t[language];
+
+  // ===== RENDER REPORT =====
   return (
     <div style={{ minHeight: "100vh", background: "#f5f4f0", fontFamily: "'Georgia', serif", padding: "20px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
@@ -284,14 +342,18 @@ export default function ReportPage() {
             cursor: "pointer",
             fontSize: 14,
             marginBottom: 16,
-            padding: "8px 0"
+            padding: "8px 0",
+            display: "flex",
+            alignItems: "center",
+            gap: 4
           }}
         >
           {lang.backToAssessment}
         </button>
 
-        {/* Report Content */}
+        {/* ===== REPORT CONTENT ===== */}
         <div style={{ background: "white", boxShadow: "0 4px 32px rgba(0,0,0,0.12)", padding: "40px 48px", borderRadius: 4 }} ref={printRef}>
+          
           {/* Title */}
           <div style={{ textAlign: "center", borderBottom: "2px solid #1a1a1a", paddingBottom: 12, marginBottom: 18 }}>
             <h1 style={{ fontFamily: "'Arial', sans-serif", fontSize: 16, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", margin: 0 }}>
@@ -323,13 +385,13 @@ export default function ReportPage() {
             </div>
           </div>
 
-          {/* Summary */}
+          {/* ===== SUMMARY ===== */}
           <h2>{lang.summary}</h2>
-          <p style={{ marginBottom: 16 }}>{result.summary[language]}</p>
+          <p style={{ marginBottom: 16, fontSize: "11pt", lineHeight: 1.65 }}>{result.summary[language]}</p>
 
-          {/* Critical Alerts */}
+          {/* ===== CRITICAL ALERTS ===== */}
           {result.criticalFindings && result.criticalFindings.length > 0 && (
-            <div style={{ background: "#ffebee", padding: "12px 16px", marginBottom: 16, borderLeft: "4px solid #cc0000" }}>
+            <div className="critical-alert" style={{ background: "#ffebee", padding: "12px 16px", margin: "10px 0", borderLeft: "4px solid #cc0000" }}>
               <p style={{ fontWeight: 600, color: "#cc0000", margin: 0 }}>⚠️ {language === "en" ? "Critical Alerts" : "জরুরি সতর্কতা"}</p>
               {result.criticalFindings.map((alert, i) => (
                 <p key={i} style={{ margin: "4px 0 0 0", fontSize: "10.5pt", color: "#cc0000" }}>{alert}</p>
@@ -337,90 +399,80 @@ export default function ReportPage() {
             </div>
           )}
 
-          {/* Symptom Domains Table */}
+          {/* ===== FINDINGS ===== */}
           {result.findings && result.findings.length > 0 && (
             <>
-              <h2>{lang.symptomDomains}</h2>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{lang.domain}</th>
-                    <th>{lang.severity}</th>
-                    <th>{lang.score}</th>
-                    <th>{lang.status}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.findings.map((finding, idx) => (
-                    <tr key={idx}>
-                      <td>{finding.condition}</td>
-                      <td><span className={getBadgeClass(finding.severity)} style={{ padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600 }}>{finding.severity}</span></td>
-                      <td>{finding.score}/{finding.maxScore}</td>
-                      <td>{getStatusText(finding.severity)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
+              <h2 style={{ marginTop: 24 }}>{language === "en" ? "Identified Concerns" : "শনাক্তকৃত উদ্বেগ"}</h2>
+              
+              {result.findings.map((finding, index) => {
+                const severityColor = finding.severity === "High" ? "#cc0000" : finding.severity === "Moderate" ? "#cc8800" : "#2d7d2d";
+                const symptoms = getCommonSymptoms(finding.condition);
+                const explanation = getScientificExplanation(finding.condition);
+                
+                return (
+                  <div key={index} className={`finding-block ${finding.severity.toLowerCase()}`} style={{ 
+                    background: "#fafafa", 
+                    padding: "14px 16px", 
+                    margin: "12px 0", 
+                    borderLeft: `4px solid ${severityColor}`,
+                    borderRadius: "0 4px 4px 0"
+                  }}>
+                    <h3 style={{ margin: "0 0 4px 0", fontSize: "12pt", fontWeight: 700 }}>
+                      {index + 1}. {finding.condition}
+                      <span className={getBadgeClass(finding.severity)} style={{ marginLeft: 10, padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600, display: "inline-block" }}>
+                        {finding.severity}
+                      </span>
+                    </h3>
+                    
+                    <p style={{ margin: "2px 0 6px 0", fontSize: "10pt", color: "#555" }}>
+                      <strong>{language === "en" ? "Score" : "স্কোর"}:</strong> {finding.score}/{finding.maxScore}
+                    </p>
 
-          {/* Detailed Findings */}
-          {result.findings && result.findings.length > 0 && (
-            <>
-              <h2 style={{ marginTop: 24 }}>{lang.detailedFindings}</h2>
-              {result.findings.map((finding, idx) => (
-                <div key={idx} className={`finding-block ${finding.severity.toLowerCase()}`} style={{ background: "#fafafa", padding: "12px 16px", margin: "8px 0", borderLeft: `3px solid ${finding.severity === "High" ? "#cc0000" : finding.severity === "Moderate" ? "#cc8800" : "#2d7d2d"}` }}>
-                  <h3 style={{ margin: "0 0 4px 0" }}>
-                    {finding.condition}
-                    <span className={getBadgeClass(finding.severity)} style={{ marginLeft: 8, padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600 }}>{finding.severity}</span>
-                  </h3>
-                  <p style={{ margin: "4px 0", fontSize: "10.5pt" }}><strong>{lang.score}:</strong> {finding.score}/{finding.maxScore}</p>
-                  
-                  <p style={{ margin: "8px 0 4px 0", fontSize: "10.5pt" }}><strong>{lang.scientificExplanation}:</strong> {finding.description}</p>
-                  
-                  <p style={{ margin: "8px 0 4px 0", fontSize: "10.5pt" }}><strong>{lang.recommendations}:</strong> {finding.recommendation}</p>
-                  
-                  {finding.exercises && finding.exercises.length > 0 && (
-                    <ul style={{ margin: "4px 0 0 0", paddingLeft: 20, fontSize: "10.5pt" }}>
-                      {finding.exercises.map((ex, exIdx) => (
-                        <li key={exIdx}>
-                          <strong>{ex.title[language]}</strong> - {ex.description[language]}
-                        </li>
+                    {/* Scientific Explanation */}
+                    <h4 style={{ fontFamily: "'Arial', sans-serif", fontSize: "9.5pt", fontWeight: 600, color: "#1a1a1a", margin: "10px 0 4px 0" }}>
+                      {lang.scientificExplanation}
+                    </h4>
+                    <p style={{ margin: "0 0 6px 0", fontSize: "10.5pt", lineHeight: 1.6 }}>{explanation}</p>
+
+                    {/* Common Symptoms */}
+                    <h4 style={{ fontFamily: "'Arial', sans-serif", fontSize: "9.5pt", fontWeight: 600, color: "#1a1a1a", margin: "8px 0 4px 0" }}>
+                      {lang.commonSymptoms}
+                    </h4>
+                    <ul style={{ margin: "0 0 6px 0", paddingLeft: 20, fontSize: "10.5pt", lineHeight: 1.6 }}>
+                      {symptoms.map((symptom, idx) => (
+                        <li key={idx}>{symptom}</li>
                       ))}
                     </ul>
-                  )}
-                </div>
-              ))}
+
+                    {/* Recommendations */}
+                    <h4 style={{ fontFamily: "'Arial', sans-serif", fontSize: "9.5pt", fontWeight: 600, color: "#1a1a1a", margin: "8px 0 4px 0" }}>
+                      {lang.recommendations}
+                    </h4>
+                    <p style={{ margin: "0 0 4px 0", fontSize: "10.5pt", lineHeight: 1.6 }}>{finding.recommendation}</p>
+
+                    {/* Exercises */}
+                    {finding.exercises && finding.exercises.length > 0 && (
+                      <ul style={{ margin: "4px 0 0 0", paddingLeft: 20, fontSize: "10.5pt", lineHeight: 1.6 }}>
+                        {finding.exercises.map((ex, exIdx) => (
+                          <li key={exIdx}>
+                            <strong>{ex.title[language]}</strong> - {ex.description[language]}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
             </>
           )}
 
-          {/* Recommended Interventions */}
-          {result.findings && result.findings.some(f => f.exercises && f.exercises.length > 0) && (
-            <>
-              <h2 style={{ marginTop: 24 }}>{lang.recommendedInterventions}</h2>
-              {result.findings.flatMap(f => f.exercises || []).map((exercise, idx) => (
-                <div key={idx} style={{ background: "#fafafa", padding: "12px 16px", margin: "8px 0", borderLeft: "3px solid #2d7d2d" }}>
-                  <h3 style={{ margin: "0 0 4px 0" }}>🧘 {exercise.title[language]}</h3>
-                  <p style={{ margin: "4px 0", fontSize: "10.5pt" }}>{exercise.description[language]}</p>
-                  {exercise.steps && (
-                    <ol style={{ margin: "4px 0 0 0", paddingLeft: 20, fontSize: "10.5pt" }}>
-                      {exercise.steps[language].map((step, stepIdx) => (
-                        <li key={stepIdx}>{step}</li>
-                      ))}
-                    </ol>
-                  )}
-                </div>
-              ))}
-            </>
-          )}
-
-          {/* Disclaimer */}
+          {/* ===== DISCLAIMER ===== */}
           <div className="disclaimer" style={{ marginTop: 24, padding: "12px 16px", background: "#f8f8f8", borderLeft: "3px solid #cc0000", fontSize: 9.5, color: "#555", lineHeight: 1.6 }}>
             <strong>{lang.disclaimer}</strong>
             <p style={{ margin: "4px 0 0 0", fontSize: "9.5pt" }}>{lang.disclaimerText}</p>
           </div>
 
-          {/* Footer */}
+          {/* ===== FOOTER ===== */}
           <div className="footer" style={{ textAlign: "center", fontFamily: "'Arial', sans-serif", fontSize: 8, color: "#999", marginTop: 30, borderTop: "1px solid #eee", paddingTop: 10 }}>
             Generated by Psychological Assessment System
             <br />
@@ -428,7 +480,7 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Download Button */}
+        {/* ===== DOWNLOAD BUTTON ===== */}
         <div style={{ marginTop: 20, display: "flex", justifyContent: "center" }}>
           <button
             onClick={handlePrint}
