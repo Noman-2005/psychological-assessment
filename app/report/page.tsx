@@ -32,22 +32,6 @@ interface AssessmentResult {
   timestamp: string;
 }
 
-// ==================== GLOBAL STORE ====================
-// This stores the data in memory (accessible across the app)
-let globalReportData: AssessmentResult | null = null;
-
-export function setReportData(data: AssessmentResult) {
-  globalReportData = data;
-  // Also store in localStorage as backup
-  try {
-    localStorage.setItem("reportData", JSON.stringify(data));
-  } catch (e) {}
-}
-
-export function getReportData(): AssessmentResult | null {
-  return globalReportData;
-}
-
 // ==================== MAIN COMPONENT ====================
 export default function ReportPage() {
   const router = useRouter();
@@ -55,54 +39,46 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<"en" | "bn">("en");
   const printRef = useRef<HTMLDivElement>(null);
-  const [hasError, setHasError] = useState(false);
 
-  // ===== LOAD DATA =====
+  // ===== LOAD DATA FROM STORAGE =====
   useEffect(() => {
     console.log("🔍 Loading report data...");
     
-    // Try to get data from multiple sources
-    let data: AssessmentResult | null = null;
-    
-    // 1. Try global variable
-    data = getReportData();
-    console.log("📦 From global:", data ? "Found" : "Not found");
-    
-    // 2. If not, try localStorage
-    if (!data) {
-      try {
-        const localData = localStorage.getItem("reportData");
-        if (localData) {
-          data = JSON.parse(localData);
-          console.log("📦 From localStorage:", data ? "Found" : "Not found");
-        }
-      } catch (e) {
-        console.error("Error reading localStorage:", e);
+    try {
+      // 1. Try localStorage first
+      let data = localStorage.getItem("reportData");
+      console.log("📦 From localStorage:", data ? "Found" : "Not found");
+      
+      // 2. If not, try sessionStorage
+      if (!data) {
+        data = sessionStorage.getItem("reportData");
+        console.log("📦 From sessionStorage:", data ? "Found" : "Not found");
       }
-    }
-    
-    // 3. If still not, try sessionStorage
-    if (!data) {
-      try {
-        const sessionData = sessionStorage.getItem("reportData");
-        if (sessionData) {
-          data = JSON.parse(sessionData);
-          console.log("📦 From sessionStorage:", data ? "Found" : "Not found");
-        }
-      } catch (e) {
-        console.error("Error reading sessionStorage:", e);
+      
+      if (data) {
+        const parsed = JSON.parse(data);
+        console.log("✅ Parsed data:", parsed);
+        setResult(parsed);
+      } else {
+        console.log("❌ No data found in any storage");
       }
+    } catch (error) {
+      console.error("❌ Error loading report data:", error);
     }
     
-    if (data && data.findings && data.findings.length > 0) {
-      console.log("✅ Data loaded successfully:", data);
-      setResult(data);
-      setHasError(false);
-    } else {
-      console.log("❌ No data found");
-      setHasError(true);
-    }
     setLoading(false);
+  }, []);
+
+  // ===== SAVE DATA TO SESSIONSTORAGE ON COMPONENT MOUNT =====
+  useEffect(() => {
+    // If data is in localStorage but not sessionStorage, copy it
+    if (typeof window !== "undefined") {
+      const data = localStorage.getItem("reportData");
+      if (data && !sessionStorage.getItem("reportData")) {
+        sessionStorage.setItem("reportData", data);
+        console.log("📦 Copied data from localStorage to sessionStorage");
+      }
+    }
   }, []);
 
   // ===== GET SCIENTIFIC EXPLANATION =====
@@ -283,8 +259,8 @@ export default function ReportPage() {
     );
   }
 
-  // ===== ERROR / NO DATA STATE =====
-  if (hasError || !result || !result.findings || result.findings.length === 0) {
+  // ===== NO DATA STATE =====
+  if (!result || !result.findings || result.findings.length === 0) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
         <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", maxWidth: 500 }}>

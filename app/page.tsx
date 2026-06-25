@@ -1787,10 +1787,9 @@ export default function Home() {
               <button
   onClick={() => {
     if (result) {
-      // Save to global variable (import from report page)
-      // Since we can't import directly, use localStorage and sessionStorage
-      localStorage.setItem('reportData', JSON.stringify(result));
-      sessionStorage.setItem('reportData', JSON.stringify(result));
+      const data = JSON.stringify(result);
+      localStorage.setItem('reportData', data);
+      sessionStorage.setItem('reportData', data);
       router.push('/report');
     }
   }}
