@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import { Inter, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
@@ -15,8 +14,8 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata: Metadata = {
-  title: "Psychological Assessment - Mental Health Screening",
-  description: "Professional AI-assisted psychological screening platform",
+  title: "Psychological Assessment System",
+  description: "Professional AI-powered psychological screening and report generation",
 };
 
 export default function RootLayout({

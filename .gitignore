@@ -53,9 +53,3 @@ ehthumbs.db
 # logs
 logs/
 *.log
-
-# Optional: if you use sentry
-.sentryclirc
-
-# Optional: if you use turborepo
-.turbo

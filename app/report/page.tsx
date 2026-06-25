@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 // ==================== TYPES ====================
 interface ReportData {
@@ -49,7 +49,7 @@ const sectionLabels = [
   { key: "recommendations" as keyof ReportData, label: "Recommendations" },
 ];
 
-// ==================== WRAPPER WITH SUSPENSE ====================
+// ==================== WRAPPER ====================
 export default function ReportPageWrapper() {
   return (
     <Suspense fallback={
@@ -65,34 +65,34 @@ export default function ReportPageWrapper() {
   );
 }
 
-// ===== DISABLE STATIC GENERATION =====
 export const dynamic = 'force-dynamic';
 
 // ==================== MAIN COMPONENT ====================
 function ReportPage() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const [form, setForm] = useState<ReportData>(initialForm);
   const [activeTab, setActiveTab] = useState("info");
   const [generating, setGenerating] = useState<{ [key: string]: boolean }>({});
   const [assessmentData, setAssessmentData] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Load assessment results from URL params
+  // Load assessment results from localStorage
   useEffect(() => {
-    const data = searchParams.get("data");
+    const data = localStorage.getItem('reportData');
     if (data) {
       try {
-        const parsed = JSON.parse(decodeURIComponent(data));
+        const parsed = JSON.parse(data);
         setAssessmentData(parsed);
         setForm(prev => ({
           ...prev,
           summary: parsed.summary?.["en"] || "",
         }));
+        localStorage.removeItem('reportData');
       } catch (e) {
         console.error("Error parsing assessment data:", e);
       }
     }
-  }, [searchParams]);
+  }, []);
 
   const update = (key: keyof ReportData, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -194,7 +194,6 @@ function ReportPage() {
     { id: "preview", label: "Preview & Download" },
   ];
 
-  // ===== RENDER =====
   return (
     <div style={{ minHeight: "100vh", background: "#f5f4f0", fontFamily: "'Inter', sans-serif" }}>
       {/* Header */}
@@ -207,9 +206,9 @@ function ReportPage() {
           <div style={{ fontSize: 10, letterSpacing: 2, opacity: 0.75 }}>CONFIDENTIAL CLINICAL DOCUMENTATION TOOL</div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
-          <a href="/" style={{ color: "white", textDecoration: "none", fontSize: 12, opacity: 0.8, padding: "6px 12px", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 4 }}>
+          <button onClick={() => router.push('/')} style={{ color: "white", textDecoration: "none", fontSize: 12, opacity: 0.8, padding: "6px 12px", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 4, background: "transparent", cursor: "pointer" }}>
             ← Back to Assessment
-          </a>
+          </button>
         </div>
       </div>
 

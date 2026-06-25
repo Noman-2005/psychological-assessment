@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // ==================== TYPES ====================
 type Language = "en" | "bn";
@@ -39,6 +40,14 @@ interface SymptomMap {
   melancholic: number;
 }
 
+interface Exercise {
+  id: string;
+  title: { en: string; bn: string };
+  description: { en: string; bn: string };
+  steps?: { en: string[]; bn: string[] };
+  category: string;
+}
+
 interface Finding {
   condition: string;
   severity: "Low" | "Mild" | "Moderate" | "High";
@@ -49,16 +58,19 @@ interface Finding {
   exercises: Exercise[];
 }
 
-interface Exercise {
-  id: string;
-  title: { en: string; bn: string };
-  description: { en: string; bn: string };
-  steps?: { en: string[]; bn: string[] };
-  category: string;
+interface AssessmentResult {
+  findings: Finding[];
+  symptomMap: SymptomMap;
+  totalQuestions: number;
+  answeredQuestions: number;
+  completionTime: string;
+  timestamp: string;
+  riskLevel: "Low" | "Mild" | "Moderate" | "High";
+  criticalFindings: string[];
+  summary: { en: string; bn: string };
 }
 
-// ==================== ALL QUESTIONS ====================
-
+// ==================== ALL QUESTIONS (79 Questions) ====================
 const ALL_QUESTIONS: Question[] = [
   // ===== SEGMENT 1: MOOD DISORDERS (15 Questions) =====
   {
@@ -1136,50 +1148,14 @@ const ALL_QUESTIONS: Question[] = [
   }
 ];
 
-// ==================== ASSESSMENT ENGINE ====================
-
-interface AssessmentResult {
-  findings: Finding[];
-  symptomMap: SymptomMap;
-  totalQuestions: number;
-  answeredQuestions: number;
-  completionTime: string;
-  timestamp: string;
-  riskLevel: "Low" | "Mild" | "Moderate" | "High";
-  criticalFindings: string[];
-  summary: { en: string; bn: string };
-}
-
-interface SymptomMap {
-  depression: number;
-  anxiety: number;
-  ocd: number;
-  ptsd: number;
-  psychosis: number;
-  borderline: number;
-  narcissistic: number;
-  eating: number;
-  maladaptive: number;
-  dissociation: number;
-  panic: number;
-  social_anxiety: number;
-  bipolar: number;
-  insomnia: number;
-  suicidal: number;
-  self_harm: number;
-  anhedonia: number;
-  melancholic: number;
-}
-
 // ==================== EXERCISES ====================
-
 const EXERCISES: { [key: string]: Exercise[] } = {
   depression: [
     {
       id: "dep_ex1",
       category: "depression",
       title: { en: "Behavioral Activation", bn: "আচরণগত সক্রিয়তা" },
-      description: { en: "Force yourself to do small tasks even when unmotivated. This releases dopamine and breaks the cycle of inactivity.", bn: "মন ভালো না থাকলেও ছোট কাজ করতে বাধ্য করুন। এটি ডোপামিন রিলিজ করে এবং অলসতার চক্র ভাঙে।" },
+      description: { en: "Force yourself to do small tasks even when unmotivated. This releases dopamine and breaks the cycle of inactivity.", bn: "মন ভালো না থাকলেও ছোট কাজ করতে বাধ্য করুন। এটি ডোপামিন রিলিজ করে এবং অলসতার চক্র ভাঙে。" },
       steps: {
         en: ["Start with a tiny task like making your bed", "Set a timer for 5 minutes", "Once you start, momentum builds", "Celebrate completing small tasks"],
         bn: ["বিছানা গোছানোর মতো ছোট কাজ দিয়ে শুরু করুন", "৫ মিনিটের টাইমার সেট করুন", "একবার শুরু করলে গতি তৈরি হয়", "ছোট কাজ শেষ করার জন্য নিজেকে পুরস্কৃত করুন"]
@@ -1276,9 +1252,9 @@ const EXERCISES: { [key: string]: Exercise[] } = {
   ]
 };
 
-// ==================== MAIN PAGE COMPONENT ====================
-
+// ==================== MAIN COMPONENT ====================
 export default function Home() {
+  const router = useRouter();
   const [language, setLanguage] = useState<Language>("en");
   const [currentSegment, setCurrentSegment] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -1604,9 +1580,7 @@ export default function Home() {
     setShowWelcome(true);
   };
 
-  // ==================== RENDER ====================
-
-  const t = {
+  const lang = {
     en: {
       appName: "Psychological Assessment",
       welcome: {
@@ -1627,14 +1601,12 @@ export default function Home() {
       },
       results: {
         title: "Your Assessment Results",
-        summaryWithDisorders: "Based on your responses, we've identified {count} area(s) that may benefit from attention.",
-        summaryNoDisorders: "No significant psychological concerns were identified.",
         detectedDisorders: "Identified Symptom Domains",
         score: "Score",
         noDisorders: "No significant concerns detected.",
         recommendedExercises: "Recommended Brain Exercises & Techniques",
         disclaimer: "This report is for informational purposes only and does not constitute medical advice. Never make any medication decisions based solely on this assessment. If you're experiencing severe distress or suicidal thoughts, please contact emergency services immediately.",
-        downloadReport: "Download Report",
+        downloadReport: "Generate Professional Report",
         retakeButton: "Retake Assessment"
       }
     },
@@ -1658,20 +1630,18 @@ export default function Home() {
       },
       results: {
         title: "আপনার মূল্যায়নের ফলাফল",
-        summaryWithDisorders: "আপনার উত্তরের ভিত্তিতে, আমরা {count} টি এলাকা শনাক্ত করেছি যা মনোযোগের প্রয়োজন হতে পারে।",
-        summaryNoDisorders: "কোনো উল্লেখযোগ্য মানসিক উদ্বেগ শনাক্ত করা যায়নি।",
         detectedDisorders: "শনাক্তকৃত লক্ষণ এলাকা",
         score: "স্কোর",
         noDisorders: "কোনো উল্লেখযোগ্য উদ্বেগ শনাক্ত করা যায়নি।",
         recommendedExercises: "প্রস্তাবিত মস্তিষ্কের ব্যায়াম ও কৌশল",
         disclaimer: "এই প্রতিবেদনটি শুধুমাত্র তথ্যগত উদ্দেশ্যে এবং এটি কোনো চিকিৎসা পরামর্শ নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না।",
-        downloadReport: "প্রতিবেদন ডাউনলোড করুন",
+        downloadReport: "পেশাদার প্রতিবেদন তৈরি করুন",
         retakeButton: "পুনরায় মূল্যায়ন"
       }
     }
   };
 
-  const lang = t[language];
+  const t = lang[language];
 
   // Welcome Screen
   if (showWelcome) {
@@ -1682,20 +1652,20 @@ export default function Home() {
             <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center mb-6">
               <span className="text-4xl">🧠</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{lang.welcome.title}</h1>
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-6">{lang.welcome.description}</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{t.welcome.title}</h1>
+            <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-6">{t.welcome.description}</p>
             
             <div className="bg-secondary/30 rounded-xl p-4 mb-6 text-left">
-              <h3 className="text-sm font-semibold text-primary mb-2">{lang.welcome.whyImportant}</h3>
+              <h3 className="text-sm font-semibold text-primary mb-2">{t.welcome.whyImportant}</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                {lang.welcome.benefits.map((b, i) => (
+                {t.welcome.benefits.map((b, i) => (
                   <li key={i}>• {b}</li>
                 ))}
               </ul>
             </div>
 
             <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mb-6">
-              <p className="text-xs text-muted-foreground">⏱️ {lang.welcome.estimatedTime}</p>
+              <p className="text-xs text-muted-foreground">⏱️ {t.welcome.estimatedTime}</p>
             </div>
 
             <div className="flex gap-3 justify-center mb-4">
@@ -1714,9 +1684,9 @@ export default function Home() {
             </div>
 
             <button onClick={handleStart} className="w-full py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02]">
-              {lang.welcome.startButton}
+              {t.welcome.startButton}
             </button>
-            <p className="text-xs text-muted-foreground/60 mt-4">{lang.welcome.disclaimer}</p>
+            <p className="text-xs text-muted-foreground/60 mt-4">{t.welcome.disclaimer}</p>
           </div>
         </div>
       </main>
@@ -1738,14 +1708,14 @@ export default function Home() {
       <main className="min-h-screen p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-xl font-bold text-white">{lang.appName}</h1>
+            <h1 className="text-xl font-bold text-white">{t.appName}</h1>
             <button onClick={handleRetake} className="text-sm text-muted-foreground hover:text-white transition-colors">
-              {lang.results.retakeButton}
+              {t.results.retakeButton}
             </button>
           </div>
 
           <div className="glass p-6 md:p-8 rounded-2xl animate-fade-in">
-            <h2 className="text-xl font-semibold text-white mb-6">{lang.results.title}</h2>
+            <h2 className="text-xl font-semibold text-white mb-6">{t.results.title}</h2>
 
             {/* Summary */}
             <div className="bg-secondary/30 rounded-xl p-4 mb-6">
@@ -1765,7 +1735,7 @@ export default function Home() {
             {/* Findings */}
             {result.findings.length > 0 ? (
               <div className="space-y-4 mb-6">
-                <h3 className="text-sm font-semibold text-white">{lang.results.detectedDisorders}</h3>
+                <h3 className="text-sm font-semibold text-white">{t.results.detectedDisorders}</h3>
                 {result.findings.map((finding, idx) => (
                   <div key={idx} className="bg-secondary/30 rounded-xl p-4">
                     <div className="flex justify-between items-start">
@@ -1778,7 +1748,7 @@ export default function Home() {
                         <p className="text-xs text-primary/80 mt-1">{finding.recommendation}</p>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {lang.results.score}: {finding.score}/{finding.maxScore}
+                        {t.results.score}: {finding.score}/{finding.maxScore}
                       </div>
                     </div>
                   </div>
@@ -1786,14 +1756,14 @@ export default function Home() {
               </div>
             ) : (
               <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-6">
-                <p className="text-green-400 text-sm">{lang.results.noDisorders}</p>
+                <p className="text-green-400 text-sm">{t.results.noDisorders}</p>
               </div>
             )}
 
             {/* Exercises */}
             {result.findings.some(f => f.exercises.length > 0) && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-white mb-4">{lang.results.recommendedExercises}</h3>
+                <h3 className="text-sm font-semibold text-white mb-4">{t.results.recommendedExercises}</h3>
                 <div className="space-y-3">
                   {result.findings.flatMap(f => f.exercises).map((exercise, idx) => (
                     <div key={idx} className="bg-secondary/30 rounded-xl p-4">
@@ -1812,34 +1782,28 @@ export default function Home() {
               </div>
             )}
 
-            {/* Download & Retake */}
+            {/* Buttons */}
             <div className="flex flex-col md:flex-row gap-3 mt-6">
-             <button
-  onClick={() => {
-    if (result) {
-      const content = generateReport(result, language);
-      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `psychological-assessment-report-${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  }}
-  className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02]"
->
-  📄 {lang.results.downloadReport}
-</button>
-              <button onClick={handleRetake} className="flex-1 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-medium transition-all">
-                {lang.results.retakeButton}
+              <button
+                onClick={() => {
+                  // Store data in localStorage and navigate to report page
+                  localStorage.setItem('reportData', JSON.stringify(result));
+                  router.push('/report');
+                }}
+                className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02] text-center"
+              >
+                📄 Generate Professional Report
+              </button>
+              <button 
+                onClick={handleRetake} 
+                className="flex-1 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-medium transition-all"
+              >
+                {t.results.retakeButton}
               </button>
             </div>
 
             <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-              <p className="text-xs text-red-400/80 text-center">{lang.results.disclaimer}</p>
+              <p className="text-xs text-red-400/80 text-center">{t.results.disclaimer}</p>
             </div>
           </div>
         </div>
@@ -1869,7 +1833,7 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-xl font-bold text-white">{lang.appName}</h1>
+          <h1 className="text-xl font-bold text-white">{t.appName}</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setLanguage("en")}
@@ -1889,14 +1853,14 @@ export default function Home() {
         {/* Progress */}
         <div className="glass p-4 rounded-xl mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-muted-foreground">{lang.assessment.progress} {Math.round(progress)}%</span>
+            <span className="text-sm text-muted-foreground">{t.assessment.progress} {Math.round(progress)}%</span>
             <span className="text-sm text-muted-foreground">{answeredCount}/{totalQuestions}</span>
           </div>
           <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
             <div className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full progress-animate" style={{ width: `${progress}%` }} />
           </div>
           <div className="text-xs text-muted-foreground mt-2">
-            {lang.assessment.segment} {currentSegment + 1} - {currentQuestionIndex + 1}/{currentQuestions.length}
+            {t.assessment.segment} {currentSegment + 1} - {currentQuestionIndex + 1}/{currentQuestions.length}
           </div>
         </div>
 
@@ -1930,7 +1894,7 @@ export default function Home() {
                 isFirstQuestion ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
               }`}
             >
-              {lang.assessment.previous}
+              {t.assessment.previous}
             </button>
 
             <button
@@ -1940,333 +1904,11 @@ export default function Home() {
                 hasAnswered ? "bg-primary hover:bg-primary/80 text-white" : "bg-secondary text-muted-foreground cursor-not-allowed"
               }`}
             >
-              {isLastQuestion ? lang.assessment.finish : lang.assessment.next}
+              {isLastQuestion ? t.assessment.finish : t.assessment.next}
             </button>
           </div>
         </div>
       </div>
     </main>
   );
-}
-
-// ==================== REPORT GENERATOR ====================
-
-// ==================== REPORT GENERATOR ====================
-
-// ==================== PROFESSIONAL AI-GENERATED DIGITAL REPORT ====================
-
-// ==================== PROFESSIONAL AI-GENERATED DIGITAL REPORT ====================
-
-function generateReport(result: AssessmentResult, language: Language): string {
-  const date = new Date(result.timestamp);
-  const formattedDate = date.toLocaleDateString(language === "en" ? "en-US" : "bn-BD", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-
-  const lines: string[] = [];
-
-  // ===== HEADER WITH PROFESSIONAL FORMAT =====
-  lines.push("╔══════════════════════════════════════════════════════════════════════════════╗");
-  lines.push("║                                                                            ║");
-  lines.push("║                         🧠 PSYCHOLOGICAL ASSESSMENT                        ║");
-  lines.push("║                            AI-POWERED SCREENING                            ║");
-  lines.push("║                                                                            ║");
-  lines.push("║                       CONFIDENTIAL DIGITAL REPORT                          ║");
-  lines.push("║                                                                            ║");
-  lines.push("╚══════════════════════════════════════════════════════════════════════════════╝");
-  lines.push("");
-  lines.push("  ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("");
-  lines.push(`  📅 Assessment Date:    ${formattedDate}`);
-  lines.push(`  📊 Report ID:          PA-${Date.now().toString().slice(-8)}`);
-  lines.push(`  📝 Risk Level:         ${result.riskLevel}`);
-  lines.push(`  📋 Questions Answered: ${result.answeredQuestions}/${result.totalQuestions}`);
-  lines.push(`  ⏱️  Completion Time:    ${result.completionTime || "N/A"}`);
-  lines.push("");
-  lines.push("  ═══════════════════════════════════════════════════════════════════════════");
-  lines.push("");
-
-  // ===== REASON FOR REFERRAL =====
-  lines.push("  📋 REASON FOR REFERRAL");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  lines.push("  The client completed a comprehensive AI-powered psychological screening");
-  lines.push("  assessment to identify potential mental health concerns and symptom patterns.");
-  lines.push("  The assessment was conducted using evidence-based clinical criteria and");
-  lines.push("  standardized screening instruments to provide insights into the client's");
-  lines.push("  psychological well-being and to offer data-driven recommendations.");
-  lines.push("");
-
-  // ===== PROCEDURES FOR EVALUATION =====
-  lines.push("  📋 PROCEDURES FOR EVALUATION");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  lines.push("  The following standardized procedures were utilized in this evaluation:");
-  lines.push("");
-  lines.push("  • Comprehensive Psychological Screening Questionnaire (79 items)");
-  lines.push("  • Multi-domain symptom assessment covering 8 clinical areas");
-  lines.push("  • Severity rating scale analysis (Likert-scale scoring)");
-  lines.push("  • Clinical indicator pattern recognition");
-  lines.push("  • Evidence-based recommendation algorithm");
-  lines.push("  • Cross-domain symptom correlation analysis");
-  lines.push("  • Risk level stratification protocol");
-  lines.push("");
-
-  // ===== ASSESSMENT SUMMARY =====
-  lines.push("  📋 ASSESSMENT SUMMARY");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  
-  const summaryText = result.summary[language];
-  const summaryWords = summaryText.split(' ');
-  let summaryLine = "  ";
-  for (const word of summaryWords) {
-    if ((summaryLine + word).length > 72) {
-      lines.push(summaryLine);
-      summaryLine = "  " + word + " ";
-    } else {
-      summaryLine += word + " ";
-    }
-  }
-  if (summaryLine.trim().length > 0) {
-    lines.push(summaryLine);
-  }
-  lines.push("");
-
-  // ===== CRITICAL ALERTS =====
-  if (result.criticalFindings.length > 0) {
-    lines.push("");
-    lines.push("  ⚠️ CRITICAL ALERTS - URGENT ATTENTION REQUIRED");
-    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-    lines.push("");
-    result.criticalFindings.forEach(alert => {
-      lines.push(`  🔴 ${alert}`);
-    });
-    lines.push("");
-  }
-
-  // ===== SYMPTOM DOMAINS ANALYSIS (TABLE FORMAT) =====
-  if (result.findings.length > 0) {
-    lines.push("");
-    lines.push("  📋 SYMPTOM DOMAINS ANALYSIS");
-    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-    lines.push("");
-    lines.push("  ┌────────────────────────────────────────────────────────────────────────────────┐");
-    lines.push("  │ DOMAIN                     │ SEVERITY  │ SCORE    │ STATUS                   │");
-    lines.push("  ├────────────────────────────────────────────────────────────────────────────────┤");
-    
-    result.findings.forEach(finding => {
-      const severityIcon = finding.severity === "High" ? "🔴" : finding.severity === "Moderate" ? "🟡" : "🟢";
-      const domain = finding.condition.padEnd(27).slice(0, 27);
-      const severity = (severityIcon + " " + finding.severity).padEnd(10);
-      const scoreText = `${finding.score}/${finding.maxScore}`.padEnd(9);
-      
-      let status = "";
-      if (finding.severity === "High") status = "Requires Immediate Attention";
-      else if (finding.severity === "Moderate") status = "Monitor Closely";
-      else status = "Mild Concern";
-      
-      lines.push(`  │ ${domain} │ ${severity} │ ${scoreText} │ ${status.padEnd(24)} │`);
-    });
-    
-    lines.push("  └────────────────────────────────────────────────────────────────────────────────┘");
-    lines.push("");
-  } else {
-    lines.push("");
-    lines.push("  ✅ No significant symptoms detected in any domain.");
-    lines.push("");
-  }
-
-  // ===== DETAILED FINDINGS =====
-  if (result.findings.length > 0) {
-    lines.push("  📋 DETAILED FINDINGS");
-    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-    lines.push("");
-    
-    result.findings.forEach((finding, index) => {
-      const severityIcon = finding.severity === "High" ? "🔴" : finding.severity === "Moderate" ? "🟡" : "🟢";
-      lines.push(`  ${severityIcon} ${finding.condition}`);
-      lines.push(`     Severity Level:   ${finding.severity}`);
-      lines.push(`     Clinical Score:   ${finding.score}/${finding.maxScore}`);
-      lines.push(`     Description:      ${finding.description}`);
-      lines.push(`     Recommendation:   ${finding.recommendation}`);
-      
-      // Exercises for this finding
-      if (finding.exercises.length > 0) {
-        lines.push(`     Recommended Interventions:`);
-        finding.exercises.forEach(ex => {
-          lines.push(`       • ${ex.title[language]}`);
-          lines.push(`         ${ex.description[language]}`);
-          if (ex.steps) {
-            lines.push(`         Implementation Steps:`);
-            ex.steps[language].forEach((step, i) => {
-              lines.push(`           ${i + 1}. ${step}`);
-            });
-          }
-        });
-      }
-      
-      if (index < result.findings.length - 1) {
-        lines.push(`     ${"·".repeat(64)}`);
-      }
-      lines.push("");
-    });
-  }
-
-  // ===== CLINICAL OBSERVATIONS =====
-  lines.push("  📋 CLINICAL OBSERVATIONS");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  
-  const hasHighRisk = result.findings.some(f => f.severity === "High");
-  const hasModerateRisk = result.findings.some(f => f.severity === "Moderate");
-  
-  if (hasHighRisk) {
-    lines.push("  The client's responses indicate significant symptom patterns that require");
-    lines.push("  immediate professional attention. The presence of multiple high-severity");
-    lines.push("  indicators suggests that the client may be experiencing considerable");
-    lines.push("  psychological distress that could impact daily functioning.");
-    lines.push("");
-    lines.push("  It is strongly recommended that the client seek a comprehensive evaluation");
-    lines.push("  by a licensed mental health professional without delay.");
-  } else if (hasModerateRisk) {
-    lines.push("  The client demonstrates moderate symptom patterns across several domains.");
-    lines.push("  While not immediately critical, these symptoms may benefit from professional");
-    lines.push("  attention and evidence-based interventions.");
-    lines.push("");
-    lines.push("  A follow-up evaluation with a mental health professional is recommended");
-    lines.push("  within the next 2-4 weeks to discuss these findings in more detail.");
-  } else if (result.findings.length > 0) {
-    lines.push("  The client shows mild symptom patterns that may benefit from self-help");
-    lines.push("  strategies and lifestyle modifications. The recommended exercises and");
-    lines.push("  techniques provided in this report may help manage these symptoms.");
-    lines.push("");
-    lines.push("  Continued monitoring and regular self-care practices are encouraged.");
-  } else {
-    lines.push("  No significant psychological concerns were identified during this screening.");
-    lines.push("  The client's responses appear to be within the normal range, suggesting");
-    lines.push("  good psychological well-being.");
-    lines.push("");
-    lines.push("  Continue regular self-care practices and maintain awareness of any");
-    lines.push("  changes in mental health status.");
-  }
-  lines.push("");
-
-  // ===== RECOMMENDATIONS =====
-  if (result.findings.some(f => f.exercises.length > 0)) {
-    lines.push("  📋 RECOMMENDED INTERVENTIONS");
-    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-    lines.push("");
-    lines.push("  Based on the assessment findings, the following evidence-based interventions");
-    lines.push("  are recommended to support psychological well-being:");
-    lines.push("");
-    
-    const uniqueExercises = new Set();
-    result.findings.forEach(finding => {
-      finding.exercises.forEach(ex => {
-        if (!uniqueExercises.has(ex.id)) {
-          uniqueExercises.add(ex.id);
-          lines.push(`  🧘 ${ex.title[language]}`);
-          lines.push(`     ${ex.description[language]}`);
-          if (ex.steps) {
-            lines.push(`     Implementation Steps:`);
-            ex.steps[language].forEach((step, i) => {
-              lines.push(`       ${i + 1}. ${step}`);
-            });
-          }
-          lines.push("");
-        }
-      });
-    });
-  }
-
-  // ===== RECOMMENDED FOLLOW-UP =====
-  lines.push("  📋 RECOMMENDED FOLLOW-UP");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  
-  if (hasHighRisk) {
-    lines.push("  ⚠️ URGENT: Immediate consultation with a licensed mental health");
-    lines.push("  professional is strongly recommended. Please do not delay seeking");
-    lines.push("  professional support.");
-    lines.push("");
-    lines.push("  • Contact a psychiatrist or clinical psychologist within 24-48 hours");
-    lines.push("  • If experiencing crisis, contact emergency services immediately");
-    lines.push("  • Share this report with the treating professional");
-  } else if (hasModerateRisk) {
-    lines.push("  • Schedule an appointment with a mental health professional");
-    lines.push("  • Recommended timeframe: 2-4 weeks");
-    lines.push("  • Share this report with the treating professional");
-    lines.push("  • Begin implementing recommended exercises");
-  } else if (result.findings.length > 0) {
-    lines.push("  • Continue implementing recommended exercises");
-    lines.push("  • Monitor symptoms for any changes");
-    lines.push("  • Schedule a follow-up assessment in 3-6 months");
-    lines.push("  • Consider consulting a therapist for additional support");
-  } else {
-    lines.push("  • Continue regular self-care practices");
-    lines.push("  • Maintain awareness of mental health status");
-    lines.push("  • No immediate follow-up required");
-  }
-  lines.push("");
-
-  // ===== INFORMED CONSENT =====
-  lines.push("  📋 INFORMED CONSENT");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  lines.push("  The client was informed of the purpose of this assessment, the limits of");
-  lines.push("  confidentiality, and how the information would be used. The client was");
-  lines.push("  encouraged to ask questions regarding the assessment process prior to");
-  lines.push("  completing the screening. Informed consent was obtained before proceeding");
-  lines.push("  with the assessment.");
-  lines.push("");
-
-  // ===== SIGNATURES =====
-  lines.push("  📋 SIGNATURES");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  lines.push("  _________________________________________");
-  lines.push("  Licensed Psychologist / Evaluator");
-  lines.push("");
-  lines.push("  License Number: _________________________");
-  lines.push("  Date: ___________________________________");
-  lines.push("");
-
-  // ===== DISCLAIMER =====
-  lines.push("  " + "═".repeat(70));
-  lines.push("");
-  lines.push("  ⚠️ DISCLAIMER");
-  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
-  lines.push("");
-  lines.push("  This report is generated by an AI-powered psychological screening system");
-  lines.push("  and is for informational purposes only. It does not constitute a medical");
-  lines.push("  diagnosis. Never make any medication decisions based solely on this");
-  lines.push("  assessment.");
-  lines.push("");
-  lines.push("  If you are experiencing severe distress or suicidal thoughts, please");
-  lines.push("  contact emergency services or a mental health professional immediately.");
-  lines.push("");
-  lines.push("  This assessment report is confidential and protected under applicable");
-  lines.push("  privacy laws. The client has the right to access, review, and request");
-  lines.push("  amendments to this report as per applicable privacy legislation.");
-  lines.push("");
-
-  // ===== FOOTER =====
-  lines.push("  " + "═".repeat(70));
-  lines.push("");
-  lines.push("  " + "🧠 PSYCHOLOGICAL ASSESSMENT SYSTEM - AI-POWERED SCREENING");
-  lines.push("  " + "© 2026 - All Rights Reserved");
-  lines.push("  " + "Report ID: PA-" + Date.now().toString().slice(-8));
-  lines.push("  " + "Generated: " + formattedDate);
-  lines.push("  " + "For Professional Use Only");
-  lines.push("");
-  lines.push("╔══════════════════════════════════════════════════════════════════════════════╗");
-  lines.push("║                    END OF REPORT                                           ║");
-  lines.push("╚══════════════════════════════════════════════════════════════════════════════╝");
-
-  return lines.join("\n");
 }
