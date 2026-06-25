@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useRouter } from "next/navigation";
 
 // ==================== TYPES ====================
 interface Exercise {
@@ -33,62 +32,80 @@ interface AssessmentResult {
   timestamp: string;
 }
 
-// ==================== WRAPPER WITH SUSPENSE ====================
-export default function ReportPageWrapper() {
-  return (
-    <Suspense fallback={
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: "#8b0000" }}>Loading Report...</div>
-          <div style={{ marginTop: 8, color: "#666" }}>Please wait</div>
-        </div>
-      </div>
-    }>
-      <ReportPage />
-    </Suspense>
-  );
+// ==================== GLOBAL STORE ====================
+// This stores the data in memory (accessible across the app)
+let globalReportData: AssessmentResult | null = null;
+
+export function setReportData(data: AssessmentResult) {
+  globalReportData = data;
+  // Also store in localStorage as backup
+  try {
+    localStorage.setItem("reportData", JSON.stringify(data));
+  } catch (e) {}
 }
 
-export const dynamic = 'force-dynamic';
+export function getReportData(): AssessmentResult | null {
+  return globalReportData;
+}
 
 // ==================== MAIN COMPONENT ====================
-function ReportPage() {
+export default function ReportPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<"en" | "bn">("en");
   const printRef = useRef<HTMLDivElement>(null);
+  const [hasError, setHasError] = useState(false);
 
-  // ===== LOAD DATA FROM URL =====
+  // ===== LOAD DATA =====
   useEffect(() => {
-    try {
-      // Get data from URL parameter
-      const dataParam = searchParams.get("data");
-      console.log("🔍 Data from URL:", dataParam);
-      
-      if (dataParam) {
-        const parsed = JSON.parse(decodeURIComponent(dataParam));
-        console.log("✅ Parsed data:", parsed);
-        setResult(parsed);
-      } else {
-        // Fallback: try localStorage
+    console.log("🔍 Loading report data...");
+    
+    // Try to get data from multiple sources
+    let data: AssessmentResult | null = null;
+    
+    // 1. Try global variable
+    data = getReportData();
+    console.log("📦 From global:", data ? "Found" : "Not found");
+    
+    // 2. If not, try localStorage
+    if (!data) {
+      try {
         const localData = localStorage.getItem("reportData");
         if (localData) {
-          const parsed = JSON.parse(localData);
-          console.log("✅ Parsed from localStorage:", parsed);
-          setResult(parsed);
-        } else {
-          console.log("❌ No data found");
+          data = JSON.parse(localData);
+          console.log("📦 From localStorage:", data ? "Found" : "Not found");
         }
+      } catch (e) {
+        console.error("Error reading localStorage:", e);
       }
-    } catch (error) {
-      console.error("❌ Error loading report data:", error);
+    }
+    
+    // 3. If still not, try sessionStorage
+    if (!data) {
+      try {
+        const sessionData = sessionStorage.getItem("reportData");
+        if (sessionData) {
+          data = JSON.parse(sessionData);
+          console.log("📦 From sessionStorage:", data ? "Found" : "Not found");
+        }
+      } catch (e) {
+        console.error("Error reading sessionStorage:", e);
+      }
+    }
+    
+    if (data && data.findings && data.findings.length > 0) {
+      console.log("✅ Data loaded successfully:", data);
+      setResult(data);
+      setHasError(false);
+    } else {
+      console.log("❌ No data found");
+      setHasError(true);
     }
     setLoading(false);
-  }, [searchParams]);
+  }, []);
 
-  // ===== GET SCIENTIFIC EXPLANATION FOR EACH DISORDER =====
+  // ===== GET SCIENTIFIC EXPLANATION =====
   const getScientificExplanation = (condition: string): string => {
     const explanations: Record<string, string> = {
       "Depression-related symptoms": "Depression occurs when brain chemicals called neurotransmitters (serotonin, dopamine, and norepinephrine) become imbalanced. This affects mood regulation, sleep patterns, appetite, and motivation. Genetic factors, life events, and brain structure changes can all contribute to this condition.",
@@ -118,7 +135,7 @@ function ReportPage() {
     return "This condition involves complex interactions between brain chemistry, neural pathways, and environmental factors. Professional evaluation can provide more detailed insights.";
   };
 
-  // ===== GET SYMPTOMS FOR EACH DISORDER =====
+  // ===== GET SYMPTOMS =====
   const getCommonSymptoms = (condition: string): string[] => {
     const symptoms: Record<string, string[]> = {
       "Depression-related symptoms": [
@@ -266,14 +283,15 @@ function ReportPage() {
     );
   }
 
-  // ===== NO DATA STATE =====
-  if (!result || !result.findings || result.findings.length === 0) {
+  // ===== ERROR / NO DATA STATE =====
+  if (hasError || !result || !result.findings || result.findings.length === 0) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
         <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", maxWidth: 500 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
           <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
-          <p style={{ color: "#666", marginBottom: 16 }}>Please complete the assessment first.</p>
+          <p style={{ color: "#666", marginBottom: 8 }}>Please complete the assessment first.</p>
+          <p style={{ color: "#999", fontSize: 12, marginBottom: 16 }}>Make sure you click "View Report" from the results page.</p>
           <button
             onClick={() => router.push("/")}
             style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 24px", borderRadius: 4, fontSize: 14, cursor: "pointer" }}
