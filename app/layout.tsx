@@ -1,14 +1,19 @@
+import type { Metadata } from 'next';
 import './globals.css';
 
-export const metadata = {
-  title: 'Mental Health & Personality Assessment',
-  description: 'A comprehensive screening and Mini-IPIP personality mapping tool.',
+export const metadata: Metadata = {
+  title: 'Psychological Assessment Engine',
+  description: 'Evidence-based mental health clinical screening utility.',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
-      <body className="antialiased bg-[#0b1120]">
+    <html lang="en" className="dark">
+      <body className="antialiased min-h-screen selection:bg-emerald-500/30">
         {children}
       </body>
     </html>
