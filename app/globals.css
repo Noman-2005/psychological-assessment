@@ -1,50 +1,141 @@
-@import "tailwindcss";
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 160 84% 39%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
-    color: #f8fafc;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    @apply bg-background text-foreground;
+    background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 40%),
+                radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 40%),
+                hsl(var(--background));
+    min-height: 100vh;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
-  .glass-card {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-white/10;
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.05);
+  }
+  
+  .glass-light {
+    @apply bg-white/5 backdrop-blur-sm border border-white/5;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] hover:border-primary/20;
   }
 
-  .btn-primary {
-    background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-    color: #ffffff;
-    box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  @keyframes pulseGlow {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.6;
+    }
   }
 
-  .btn-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px 0 rgba(6, 182, 212, 0.4);
+  @keyframes progressFill {
+    from {
+      width: 0%;
+    }
+    to {
+      width: var(--progress);
+    }
   }
 
-  .option-btn {
-    background: rgba(255, 255, 255, 0.03);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
+  .progress-animate {
+    animation: progressFill 0.8s ease-out forwards;
   }
 
-  .option-btn:hover {
-    background: rgba(255, 255, 255, 0.07);
-    transform: translateX(4px);
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-card/50;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full hover:bg-primary/70 transition-colors;
+  }
+}
 
-  .option-btn.selected {
-    background: rgba(16, 185, 129, 0.15);
-    border-color: #10b981;
-    box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.1);
-  }
+/* Typography for Bengali */
+.bn-text {
+  font-family: var(--font-hind-siliguri);
+}
+
+.en-text {
+  font-family: var(--font-inter);
 }
