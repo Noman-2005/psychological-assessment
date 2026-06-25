@@ -1785,15 +1785,14 @@ export default function Home() {
             {/* Buttons */}
             <div className="flex flex-col md:flex-row gap-3 mt-6">
               <button
-                onClick={() => {
-                  // Store data in localStorage and navigate to report page
-                  localStorage.setItem('reportData', JSON.stringify(result));
-                  router.push('/report');
-                }}
-                className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02] text-center"
-              >
-                📄 Generate Professional Report
-              </button>
+  onClick={() => {
+    localStorage.setItem('reportData', JSON.stringify(result));
+    router.push('/report');
+  }}
+  className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02] text-center"
+>
+  📄 View Report
+</button>
               <button 
                 onClick={handleRetake} 
                 className="flex-1 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-medium transition-all"

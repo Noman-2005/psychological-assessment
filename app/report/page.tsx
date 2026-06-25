@@ -1,180 +1,104 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 // ==================== TYPES ====================
-interface ReportData {
-  clientNumber: string;
-  evalDateFrom: string;
-  evalDateTo: string;
-  reportDate: string;
-  evaluatorName: string;
-  evaluatorTitle: string;
-  institution: string;
-  institutionAddress: string;
-  institutionPhone: string;
-  reasonForReferral: string;
-  procedures: string;
-  backgroundInfo: string;
-  testResults: string;
-  summary: string;
-  recommendations: string;
+interface Finding {
+  condition: string;
+  severity: "Low" | "Mild" | "Moderate" | "High";
+  score: number;
+  maxScore: number;
+  description: string;
+  recommendation: string;
+  exercises: Exercise[];
 }
 
-const initialForm: ReportData = {
-  clientNumber: "",
-  evalDateFrom: "",
-  evalDateTo: "",
-  reportDate: "",
-  evaluatorName: "",
-  evaluatorTitle: "",
-  institution: "",
-  institutionAddress: "",
-  institutionPhone: "",
-  reasonForReferral: "",
-  procedures: "",
-  backgroundInfo: "",
-  testResults: "",
-  summary: "",
-  recommendations: "",
-};
-
-const sectionLabels = [
-  { key: "reasonForReferral" as keyof ReportData, label: "Reason for Referral" },
-  { key: "procedures" as keyof ReportData, label: "Procedures for Evaluation" },
-  { key: "backgroundInfo" as keyof ReportData, label: "Relevant Background Information" },
-  { key: "testResults" as keyof ReportData, label: "Test Results & Observations" },
-  { key: "summary" as keyof ReportData, label: "Summary" },
-  { key: "recommendations" as keyof ReportData, label: "Recommendations" },
-];
-
-// ==================== WRAPPER ====================
-export default function ReportPageWrapper() {
-  return (
-    <Suspense fallback={
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 20, fontWeight: 600, color: "#8b0000" }}>Loading Report Generator...</div>
-          <div style={{ marginTop: 12, color: "#666" }}>Please wait</div>
-        </div>
-      </div>
-    }>
-      <ReportPage />
-    </Suspense>
-  );
+interface Exercise {
+  id: string;
+  title: { en: string; bn: string };
+  description: { en: string; bn: string };
+  steps?: { en: string[]; bn: string[] };
+  category: string;
 }
 
-export const dynamic = 'force-dynamic';
+interface AssessmentResult {
+  findings: Finding[];
+  totalQuestions: number;
+  answeredQuestions: number;
+  riskLevel: "Low" | "Mild" | "Moderate" | "High";
+  criticalFindings: string[];
+  summary: { en: string; bn: string };
+  timestamp: string;
+}
 
 // ==================== MAIN COMPONENT ====================
-function ReportPage() {
+export default function ReportPage() {
   const router = useRouter();
-  const [form, setForm] = useState<ReportData>(initialForm);
-  const [activeTab, setActiveTab] = useState("info");
-  const [generating, setGenerating] = useState<{ [key: string]: boolean }>({});
-  const [assessmentData, setAssessmentData] = useState<any>(null);
+  const [result, setResult] = useState<AssessmentResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [language, setLanguage] = useState<"en" | "bn">("en");
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Load assessment results from localStorage
   useEffect(() => {
-    const data = localStorage.getItem('reportData');
+    const data = localStorage.getItem("reportData");
     if (data) {
       try {
         const parsed = JSON.parse(data);
-        setAssessmentData(parsed);
-        setForm(prev => ({
-          ...prev,
-          summary: parsed.summary?.["en"] || "",
-        }));
-        localStorage.removeItem('reportData');
+        setResult(parsed);
+        localStorage.removeItem("reportData");
       } catch (e) {
-        console.error("Error parsing assessment data:", e);
+        console.error("Error parsing report data:", e);
       }
     }
+    setLoading(false);
   }, []);
-
-  const update = (key: keyof ReportData, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const aiGenerate = async (sectionKey: keyof ReportData, label: string) => {
-    setGenerating((prev) => ({ ...prev, [sectionKey]: true }));
-    
-    try {
-      const mockResponses: Record<string, string> = {
-        reasonForReferral: `The client was referred for a comprehensive psychological evaluation to assess cognitive functioning, emotional well-being, and overall mental health status. Concerns were raised regarding potential psychological symptoms that may be impacting daily functioning. The evaluation aims to provide diagnostic clarity and inform evidence-based treatment recommendations.`,
-        
-        procedures: `The following standardized procedures were utilized in this evaluation:
-• Comprehensive Clinical Interview with the client
-• Multi-domain Psychological Screening Questionnaire (79 items)
-• Severity Rating Scale Analysis (Likert-scale scoring)
-• Clinical Indicator Pattern Recognition
-• Cross-domain Symptom Correlation Analysis
-• Evidence-based Recommendation Algorithm
-• Risk Level Stratification Protocol`,
-        
-        backgroundInfo: `The client presents with symptoms that may benefit from a comprehensive mental health assessment. Based on the screening results, multiple clinical domains were identified that warrant further investigation. The client's responses suggest patterns consistent with various psychological conditions that may require targeted intervention. Current functioning appears to be impacted across multiple life domains.`,
-        
-        testResults: `Assessment results indicate elevated symptoms across multiple clinical domains. The pattern of responses suggests significant psychological distress that may be impacting daily functioning. Specific areas of concern include mood regulation, anxiety symptoms, and potential cognitive patterns that warrant further clinical investigation. Standardized measures reveal clinically significant elevations in several symptom clusters. Behavioral observations during the assessment were consistent with reported symptoms.`,
-        
-        summary: `Based on the comprehensive screening assessment, the client demonstrates symptoms consistent with potential psychological concerns that would benefit from professional clinical evaluation. The pattern of results suggests the presence of significant symptom clusters that may be impacting daily functioning and quality of life. Continued monitoring and professional support are recommended to address identified concerns.`,
-        
-        recommendations: `Based on the assessment findings, the following evidence-based recommendations are made:
-1. Comprehensive clinical evaluation by a licensed mental health professional
-2. Consideration of targeted therapeutic interventions based on identified symptom domains
-3. Implementation of recommended coping strategies and self-management techniques
-4. Regular monitoring of symptom progression and treatment response
-5. Follow-up assessment to evaluate treatment effectiveness and adjust interventions as needed`
-      };
-
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const response = mockResponses[sectionKey] || `[AI Generated Content for ${label} - Please review and edit as needed]`;
-      update(sectionKey, response);
-      
-    } catch (e) {
-      console.error("AI Generation Error:", e);
-    }
-    setGenerating((prev) => ({ ...prev, [sectionKey]: false }));
-  };
 
   const handlePrint = () => {
     if (!printRef.current) return;
-    
+
     const printContent = printRef.current.innerHTML;
     const win = window.open("", "_blank");
     if (!win) return;
-    
+
     win.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Psychological Report - ${form.clientNumber || "Client"}</title>
+        <title>Psychological Assessment Report</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'EB Garamond', Georgia, serif; font-size: 11.5pt; color: #1a1a1a; background: white; padding: 0; }
-          .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 18mm 20mm 18mm 22mm; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #8b0000; padding-bottom: 14px; margin-bottom: 18px; }
-          .logo-block { display: flex; align-items: center; gap: 12px; }
-          .logo-icon { width: 44px; height: 44px; background: #8b0000; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
-          .logo-icon svg { fill: white; width: 28px; height: 28px; }
-          .univ-name { font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 4px; color: #1a1a1a; line-height: 1; }
-          .univ-sub { font-family: 'Inter', sans-serif; font-size: 7px; letter-spacing: 6px; color: #555; margin-top: 3px; }
-          .evaluator-block { text-align: right; font-family: 'Inter', sans-serif; font-size: 9.5pt; color: #333; line-height: 1.6; }
-          .evaluator-name { font-style: italic; font-size: 10pt; color: #1a1a1a; }
-          .report-title { text-align: center; font-family: 'Inter', sans-serif; font-size: 15pt; font-weight: 600; letter-spacing: 3px; color: #1a1a1a; text-transform: uppercase; border-bottom: 1.5px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 16px; }
-          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1.5px solid #1a1a1a; margin-bottom: 22px; }
+          body { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11.5pt; color: #1a1a1a; background: white; padding: 0; }
+          .page { max-width: 210mm; min-height: 297mm; margin: 0 auto; padding: 18mm 20mm 18mm 22mm; }
+          .report-title { text-align: center; font-family: 'Arial', sans-serif; font-size: 16pt; font-weight: 700; letter-spacing: 3px; color: #1a1a1a; text-transform: uppercase; border-bottom: 2px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 18px; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1.5px solid #1a1a1a; margin-bottom: 22px; }
           .meta-cell { padding: 6px 10px; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; }
-          .meta-cell:nth-child(even) { border-right: none; }
-          .meta-label { font-family: 'Inter', sans-serif; font-size: 8.5pt; font-weight: 600; color: #1a1a1a; margin-bottom: 1px; }
+          .meta-cell:nth-child(3n) { border-right: none; }
+          .meta-label { font-family: 'Arial', sans-serif; font-size: 8.5pt; font-weight: 600; color: #1a1a1a; margin-bottom: 1px; }
           .meta-value { font-size: 10.5pt; color: #222; }
-          h2 { font-family: 'Inter', sans-serif; font-size: 11pt; font-weight: 700; color: #1a1a1a; margin: 18px 0 7px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+          h2 { font-family: 'Arial', sans-serif; font-size: 12pt; font-weight: 700; color: #1a1a1a; margin: 18px 0 7px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+          h3 { font-family: 'Arial', sans-serif; font-size: 10.5pt; font-weight: 600; color: #1a1a1a; margin: 12px 0 5px; }
           p, li { font-size: 11pt; line-height: 1.65; color: #222; }
           ul, ol { padding-left: 20px; margin: 6px 0; }
           li { margin-bottom: 3px; }
-          .confidential-stamp { text-align: center; font-family: 'Inter', sans-serif; font-size: 7pt; letter-spacing: 3px; color: #999; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
+          .severity-high { color: #cc0000; font-weight: 600; }
+          .severity-moderate { color: #cc8800; font-weight: 600; }
+          .severity-mild { color: #2d7d2d; font-weight: 600; }
+          .severity-low { color: #2d7d2d; font-weight: 600; }
+          .table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+          .table th { background: #f0f0f0; font-family: 'Arial', sans-serif; font-size: 9pt; font-weight: 600; padding: 6px 10px; border: 1px solid #ccc; text-align: left; }
+          .table td { padding: 6px 10px; border: 1px solid #ccc; font-size: 10.5pt; }
+          .disclaimer { margin-top: 24px; padding: 12px 16px; background: #f8f8f8; border-left: 3px solid #cc0000; font-size: 9.5pt; color: #555; line-height: 1.6; }
+          .footer { text-align: center; font-family: 'Arial', sans-serif; font-size: 8pt; color: #999; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
+          .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 9pt; font-weight: 600; font-family: 'Arial', sans-serif; }
+          .badge-high { background: #ffebee; color: #cc0000; }
+          .badge-moderate { background: #fff3e0; color: #cc8800; }
+          .badge-mild { background: #e8f5e9; color: #2d7d2d; }
+          .badge-low { background: #e8f5e9; color: #2d7d2d; }
+          .finding-block { background: #fafafa; padding: 12px 16px; margin: 8px 0; border-left: 3px solid #1a1a1a; }
+          .finding-block.high { border-left-color: #cc0000; }
+          .finding-block.moderate { border-left-color: #cc8800; }
+          .finding-block.mild { border-left-color: #2d7d2d; }
         </style>
       </head>
       <body>
@@ -184,194 +108,338 @@ function ReportPage() {
     `);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); }, 600);
+    setTimeout(() => {
+      win.print();
+    }, 600);
   };
 
-  const tabs = [
-    { id: "info", label: "Client Info" },
-    { id: "evaluator", label: "Evaluator" },
-    { id: "sections", label: "Report Sections" },
-    { id: "preview", label: "Preview & Download" },
-  ];
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "#8b0000" }}>Loading Report...</div>
+          <div style={{ marginTop: 8, color: "#666" }}>Please wait</div>
+        </div>
+      </div>
+    );
+  }
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#f5f4f0", fontFamily: "'Inter', sans-serif" }}>
-      {/* Header */}
-      <div style={{ background: "#8b0000", color: "white", padding: "14px 32px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ background: "white", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}>
-          <svg viewBox="0 0 40 40" width="24" fill="#8b0000"><rect x="5" y="5" width="12" height="30"/><rect x="23" y="5" width="12" height="30"/><rect x="5" y="5" width="30" height="10"/></svg>
-        </div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: 3 }}>PSYCHOLOGICAL REPORT GENERATOR</div>
-          <div style={{ fontSize: 10, letterSpacing: 2, opacity: 0.75 }}>CONFIDENTIAL CLINICAL DOCUMENTATION TOOL</div>
-        </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
-          <button onClick={() => router.push('/')} style={{ color: "white", textDecoration: "none", fontSize: 12, opacity: 0.8, padding: "6px 12px", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 4, background: "transparent", cursor: "pointer" }}>
-            ← Back to Assessment
+  if (!result) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
+        <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
+          <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
+          <p style={{ color: "#666", marginBottom: 16 }}>Please complete the assessment first.</p>
+          <button
+            onClick={() => router.push("/")}
+            style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 24px", borderRadius: 4, fontSize: 14, cursor: "pointer" }}
+          >
+            Go to Assessment
           </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Tabs */}
-      <div style={{ background: "#1a1a1a", display: "flex", gap: 0 }}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-            padding: "11px 24px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, letterSpacing: 1,
-            background: activeTab === t.id ? "#8b0000" : "transparent",
-            color: activeTab === t.id ? "white" : "#aaa",
-            transition: "all 0.15s"
-          }}>{t.label.toUpperCase()}</button>
-        ))}
-      </div>
+  const t = {
+    en: {
+      title: "Automated Confidential Psychological Assessment Report",
+      assessmentDate: "Assessment Date",
+      reportId: "Report ID",
+      riskLevel: "Risk Level",
+      questionsAnswered: "Questions Answered",
+      summary: "Assessment Summary",
+      symptomDomains: "Symptom Domains",
+      domain: "Domain",
+      severity: "Severity",
+      score: "Score",
+      status: "Status",
+      detailedFindings: "Detailed Findings",
+      scientificExplanation: "Scientific Explanation",
+      recommendations: "Recommendations",
+      recommendedInterventions: "Recommended Interventions",
+      disclaimer: "Disclaimer",
+      disclaimerText: "This is an automated screening report for informational purposes only. It does not constitute a medical diagnosis. Never make any medication decisions based solely on this assessment. If you are experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately.",
+      downloadPdf: "⬇ Download PDF",
+      backToAssessment: "← Back to Assessment"
+    },
+    bn: {
+      title: "স্বয়ংক্রিয় গোপনীয় মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন",
+      assessmentDate: "মূল্যায়নের তারিখ",
+      reportId: "প্রতিবেদন আইডি",
+      riskLevel: "ঝুঁকির মাত্রা",
+      questionsAnswered: "উত্তরপ্রাপ্ত প্রশ্ন",
+      summary: "মূল্যায়নের সারাংশ",
+      symptomDomains: "লক্ষণ এলাকা",
+      domain: "এলাকা",
+      severity: "তীব্রতা",
+      score: "স্কোর",
+      status: "অবস্থা",
+      detailedFindings: "বিস্তারিত ফলাফল",
+      scientificExplanation: "বৈজ্ঞানিক ব্যাখ্যা",
+      recommendations: "সুপারিশ",
+      recommendedInterventions: "প্রস্তাবিত হস্তক্ষেপ",
+      disclaimer: "দাবিত্যাগ",
+      disclaimerText: "এটি একটি স্বয়ংক্রিয় স্ক্রীনিং প্রতিবেদন যা শুধুমাত্র তথ্যগত উদ্দেশ্যে। এটি কোনো চিকিৎসা নির্ণয় নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।",
+      downloadPdf: "⬇ পিডিএফ ডাউনলোড করুন",
+      backToAssessment: "← মূল্যায়নে ফিরে যান"
+    }
+  };
 
-      {/* Content */}
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 20px" }}>
+  const lang = t[language];
 
-        {activeTab === "info" && (
-          <div style={{ background: "white", padding: "22px 24px", boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}>
-            <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1, color: "#8b0000", marginBottom: 16, textTransform: "uppercase", borderLeft: "3px solid #8b0000", paddingLeft: 10 }}>Client Information</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 20px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Client Number</label>
-                <input value={form.clientNumber} onChange={e => update("clientNumber", e.target.value)} placeholder="e.g. 4561-2024" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Evaluation From</label>
-                <input value={form.evalDateFrom} onChange={e => update("evalDateFrom", e.target.value)} placeholder="MM/DD/YYYY" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Evaluation To</label>
-                <input value={form.evalDateTo} onChange={e => update("evalDateTo", e.target.value)} placeholder="MM/DD/YYYY" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Date of Report</label>
-                <input value={form.reportDate} onChange={e => update("reportDate", e.target.value)} placeholder="MM/DD/YYYY" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
+  const getSeverityClass = (severity: string) => {
+    switch (severity) {
+      case "High": return "severity-high";
+      case "Moderate": return "severity-moderate";
+      case "Mild": return "severity-mild";
+      default: return "severity-low";
+    }
+  };
+
+  const getBadgeClass = (severity: string) => {
+    switch (severity) {
+      case "High": return "badge-high";
+      case "Moderate": return "badge-moderate";
+      case "Mild": return "badge-mild";
+      default: return "badge-low";
+    }
+  };
+
+  const getStatusText = (severity: string) => {
+    switch (severity) {
+      case "High": return "Requires Immediate Attention";
+      case "Moderate": return "Monitor Closely";
+      case "Mild": return "Mild Concern";
+      default: return "Low Concern";
+    }
+  };
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#f5f4f0", fontFamily: "'Georgia', serif", padding: "20px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        {/* Language Toggle */}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 16 }}>
+          <button
+            onClick={() => setLanguage("en")}
+            style={{
+              padding: "6px 16px",
+              border: language === "en" ? "2px solid #8b0000" : "1px solid #ccc",
+              borderRadius: 4,
+              background: language === "en" ? "#8b0000" : "white",
+              color: language === "en" ? "white" : "#333",
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            English
+          </button>
+          <button
+            onClick={() => setLanguage("bn")}
+            style={{
+              padding: "6px 16px",
+              border: language === "bn" ? "2px solid #8b0000" : "1px solid #ccc",
+              borderRadius: 4,
+              background: language === "bn" ? "#8b0000" : "white",
+              color: language === "bn" ? "white" : "#333",
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            বাংলা
+          </button>
+        </div>
+
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/")}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "#8b0000",
+            cursor: "pointer",
+            fontSize: 14,
+            marginBottom: 16,
+            padding: "8px 0"
+          }}
+        >
+          {lang.backToAssessment}
+        </button>
+
+        {/* Report Content */}
+        <div style={{ background: "white", boxShadow: "0 4px 32px rgba(0,0,0,0.12)", padding: "40px 48px", borderRadius: 4 }} ref={printRef}>
+          {/* Title */}
+          <div style={{ textAlign: "center", borderBottom: "2px solid #1a1a1a", paddingBottom: 12, marginBottom: 18 }}>
+            <h1 style={{ fontFamily: "'Arial', sans-serif", fontSize: 16, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", margin: 0 }}>
+              {lang.title}
+            </h1>
+          </div>
+
+          {/* Meta Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", border: "1.5px solid #1a1a1a", marginBottom: 22 }}>
+            <div style={{ padding: "6px 10px", borderRight: "1px solid #ccc", borderBottom: "1px solid #ccc" }}>
+              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.assessmentDate}</div>
+              <div style={{ fontSize: 10.5 }}>{formatDate(result.timestamp)}</div>
+            </div>
+            <div style={{ padding: "6px 10px", borderRight: "1px solid #ccc", borderBottom: "1px solid #ccc" }}>
+              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.reportId}</div>
+              <div style={{ fontSize: 10.5 }}>PA-{Date.now().toString().slice(-8)}</div>
+            </div>
+            <div style={{ padding: "6px 10px", borderBottom: "1px solid #ccc" }}>
+              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.riskLevel}</div>
+              <div style={{ fontSize: 10.5 }}>
+                <span className={getBadgeClass(result.riskLevel)} style={{ padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600, display: "inline-block" }}>
+                  {result.riskLevel}
+                </span>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTab === "evaluator" && (
-          <div style={{ background: "white", padding: "22px 24px", boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}>
-            <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1, color: "#8b0000", marginBottom: 16, textTransform: "uppercase", borderLeft: "3px solid #8b0000", paddingLeft: 10 }}>Evaluator Details</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 20px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Evaluator Name</label>
-                <input value={form.evaluatorName} onChange={e => update("evaluatorName", e.target.value)} placeholder="e.g. W. Joel Schneider, Ph.D." style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Title / Department</label>
-                <input value={form.evaluatorTitle} onChange={e => update("evaluatorTitle", e.target.value)} placeholder="e.g. Psychological Studies in Education" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Institution</label>
-                <input value={form.institution} onChange={e => update("institution", e.target.value)} placeholder="e.g. Temple University" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Institution Address</label>
-                <input value={form.institutionAddress} onChange={e => update("institutionAddress", e.target.value)} placeholder="e.g. Philadelphia, PA 19122" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#444", marginBottom: 5, letterSpacing: 0.5 }}>Phone</label>
-                <input value={form.institutionPhone} onChange={e => update("institutionPhone", e.target.value)} placeholder="e.g. (215) 204-8093" style={{ width: "100%", border: "1.5px solid #ddd", padding: "8px 11px", fontSize: 13, outline: "none", color: "#1a1a1a", fontFamily: "inherit" }} />
-              </div>
+            <div style={{ padding: "6px 10px", borderRight: "1px solid #ccc" }}>
+              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.questionsAnswered}</div>
+              <div style={{ fontSize: 10.5 }}>{result.answeredQuestions} / {result.totalQuestions}</div>
             </div>
           </div>
-        )}
 
-        {activeTab === "sections" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            {sectionLabels.map(({ key, label }) => (
-              <div key={key} style={{ background: "white", padding: "22px 24px", boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}>
-                <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1, color: "#8b0000", marginBottom: 16, textTransform: "uppercase", borderLeft: "3px solid #8b0000", paddingLeft: 10 }}>{label}</div>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-                  <button onClick={() => aiGenerate(key, label)} disabled={generating[key]} style={{
-                    background: generating[key] ? "#ccc" : "#8b0000", color: "white", border: "none",
-                    padding: "7px 18px", fontSize: 12, fontWeight: 600, cursor: generating[key] ? "default" : "pointer", letterSpacing: 0.5, borderRadius: 4
-                  }}>
-                    {generating[key] ? "⏳ Generating..." : "✨ AI Generate"}
-                  </button>
-                </div>
-                <textarea
-                  value={form[key]}
-                  onChange={e => update(key, e.target.value)}
-                  placeholder={`Write or generate the ${label} section...`}
-                  rows={6}
-                  style={{ width: "100%", border: "1.5px solid #ddd", padding: "10px 12px", fontSize: 13, fontFamily: "Georgia, serif", resize: "vertical", outline: "none", color: "#222", lineHeight: 1.65, borderRadius: 4 }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+          {/* Summary */}
+          <h2>{lang.summary}</h2>
+          <p style={{ marginBottom: 16 }}>{result.summary[language]}</p>
 
-        {activeTab === "preview" && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: "#666" }}>Preview your report below. Click Download to save as PDF.</div>
-              <button onClick={handlePrint} style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: 1, borderRadius: 4 }}>
-                ⬇ DOWNLOAD / PRINT PDF
-              </button>
+          {/* Critical Alerts */}
+          {result.criticalFindings && result.criticalFindings.length > 0 && (
+            <div style={{ background: "#ffebee", padding: "12px 16px", marginBottom: 16, borderLeft: "4px solid #cc0000" }}>
+              <p style={{ fontWeight: 600, color: "#cc0000", margin: 0 }}>⚠️ {language === "en" ? "Critical Alerts" : "জরুরি সতর্কতা"}</p>
+              {result.criticalFindings.map((alert, i) => (
+                <p key={i} style={{ margin: "4px 0 0 0", fontSize: "10.5pt", color: "#cc0000" }}>{alert}</p>
+              ))}
             </div>
+          )}
 
-            <div style={{ background: "white", boxShadow: "0 4px 32px rgba(0,0,0,0.12)", padding: "40px 48px", fontFamily: "Georgia, serif" }} ref={printRef}>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2.5px solid #8b0000", paddingBottom: 14, marginBottom: 18 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 44, height: 44, background: "#8b0000", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}>
-                    <svg viewBox="0 0 40 40" width="28" fill="white"><rect x="4" y="4" width="12" height="32"/><rect x="24" y="4" width="12" height="32"/><rect x="4" y="4" width="32" height="11"/></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "sans-serif", fontSize: 20, fontWeight: 800, letterSpacing: 4, color: "#1a1a1a" }}>{form.institution || "INSTITUTION"}</div>
-                    <div style={{ fontFamily: "sans-serif", fontSize: 7, letterSpacing: 5, color: "#777", marginTop: 2 }}>UNIVERSITY</div>
-                  </div>
-                </div>
-                <div style={{ textAlign: "right", fontFamily: "sans-serif", fontSize: 10, color: "#444", lineHeight: 1.7 }}>
-                  <div style={{ fontStyle: "italic", fontSize: 11 }}>{form.evaluatorName || "Evaluator Name"}</div>
-                  <div>{form.evaluatorTitle || "Department / Title"}</div>
-                  <div>{form.institutionAddress || "Address"}</div>
-                  <div>{form.institutionPhone || "Phone"}</div>
-                </div>
-              </div>
+          {/* Symptom Domains Table */}
+          {result.findings && result.findings.length > 0 && (
+            <>
+              <h2>{lang.symptomDomains}</h2>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>{lang.domain}</th>
+                    <th>{lang.severity}</th>
+                    <th>{lang.score}</th>
+                    <th>{lang.status}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.findings.map((finding, idx) => (
+                    <tr key={idx}>
+                      <td>{finding.condition}</td>
+                      <td><span className={getBadgeClass(finding.severity)} style={{ padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600 }}>{finding.severity}</span></td>
+                      <td>{finding.score}/{finding.maxScore}</td>
+                      <td>{getStatusText(finding.severity)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
 
-              <div style={{ textAlign: "center", fontFamily: "sans-serif", fontSize: 15, fontWeight: 700, letterSpacing: 3, borderBottom: "1.5px solid #1a1a1a", paddingBottom: 8, marginBottom: 16, textTransform: "uppercase" }}>
-                Confidential Psychological Report
-              </div>
+          {/* Detailed Findings */}
+          {result.findings && result.findings.length > 0 && (
+            <>
+              <h2 style={{ marginTop: 24 }}>{lang.detailedFindings}</h2>
+              {result.findings.map((finding, idx) => (
+                <div key={idx} className={`finding-block ${finding.severity.toLowerCase()}`} style={{ background: "#fafafa", padding: "12px 16px", margin: "8px 0", borderLeft: `3px solid ${finding.severity === "High" ? "#cc0000" : finding.severity === "Moderate" ? "#cc8800" : "#2d7d2d"}` }}>
+                  <h3 style={{ margin: "0 0 4px 0" }}>
+                    {finding.condition}
+                    <span className={getBadgeClass(finding.severity)} style={{ marginLeft: 8, padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600 }}>{finding.severity}</span>
+                  </h3>
+                  <p style={{ margin: "4px 0", fontSize: "10.5pt" }}><strong>{lang.score}:</strong> {finding.score}/{finding.maxScore}</p>
+                  
+                  <p style={{ margin: "8px 0 4px 0", fontSize: "10.5pt" }}><strong>{lang.scientificExplanation}:</strong> {finding.description}</p>
+                  
+                  <p style={{ margin: "8px 0 4px 0", fontSize: "10.5pt" }}><strong>{lang.recommendations}:</strong> {finding.recommendation}</p>
+                  
+                  {finding.exercises && finding.exercises.length > 0 && (
+                    <ul style={{ margin: "4px 0 0 0", paddingLeft: 20, fontSize: "10.5pt" }}>
+                      {finding.exercises.map((ex, exIdx) => (
+                        <li key={exIdx}>
+                          <strong>{ex.title[language]}</strong> - {ex.description[language]}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
 
-              {/* Meta Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1.5px solid #1a1a1a", marginBottom: 24 }}>
-                <div style={{ padding: "6px 11px", borderRight: "1px solid #ccc", borderBottom: "1px solid #ccc" }}>
-                  <div style={{ fontFamily: "sans-serif", fontSize: 9, fontWeight: 700, marginBottom: 1 }}>Client Number</div>
-                  <div style={{ fontSize: 11 }}>{form.clientNumber || "—"}</div>
+          {/* Recommended Interventions */}
+          {result.findings && result.findings.some(f => f.exercises && f.exercises.length > 0) && (
+            <>
+              <h2 style={{ marginTop: 24 }}>{lang.recommendedInterventions}</h2>
+              {result.findings.flatMap(f => f.exercises || []).map((exercise, idx) => (
+                <div key={idx} style={{ background: "#fafafa", padding: "12px 16px", margin: "8px 0", borderLeft: "3px solid #2d7d2d" }}>
+                  <h3 style={{ margin: "0 0 4px 0" }}>🧘 {exercise.title[language]}</h3>
+                  <p style={{ margin: "4px 0", fontSize: "10.5pt" }}>{exercise.description[language]}</p>
+                  {exercise.steps && (
+                    <ol style={{ margin: "4px 0 0 0", paddingLeft: 20, fontSize: "10.5pt" }}>
+                      {exercise.steps[language].map((step, stepIdx) => (
+                        <li key={stepIdx}>{step}</li>
+                      ))}
+                    </ol>
+                  )}
                 </div>
-                <div style={{ padding: "6px 11px", borderBottom: "1px solid #ccc" }}>
-                  <div style={{ fontFamily: "sans-serif", fontSize: 9, fontWeight: 700, marginBottom: 1 }}>Evaluation Dates</div>
-                  <div style={{ fontSize: 11 }}>{form.evalDateFrom || "—"} – {form.evalDateTo || "—"}</div>
-                </div>
-                <div style={{ padding: "6px 11px", borderRight: "1px solid #ccc" }}>
-                  <div style={{ fontFamily: "sans-serif", fontSize: 9, fontWeight: 700, marginBottom: 1 }}>Date of Report</div>
-                  <div style={{ fontSize: 11 }}>{form.reportDate || "—"}</div>
-                </div>
-                <div style={{ padding: "6px 11px" }}>
-                  <div style={{ fontFamily: "sans-serif", fontSize: 9, fontWeight: 700, marginBottom: 1 }}>Report Status</div>
-                  <div style={{ fontSize: 11 }}>Final</div>
-                </div>
-              </div>
+              ))}
+            </>
+          )}
 
-              {/* Sections */}
-              {sectionLabels.map(({ key, label }) => form[key] ? (
-                <div key={key}>
-                  <div style={{ fontFamily: "sans-serif", fontSize: 12, fontWeight: 700, borderBottom: "1px solid #ddd", paddingBottom: 3, marginTop: 20, marginBottom: 7 }}>{label}</div>
-                  <div style={{ fontSize: 11, lineHeight: 1.7, whiteSpace: "pre-wrap", color: "#222" }}>{form[key]}</div>
-                </div>
-              ) : null)}
-
-              {/* Confidential Stamp */}
-              <div style={{ textAlign: "center", fontFamily: "sans-serif", fontSize: 8, letterSpacing: 3, color: "#bbb", marginTop: 36, borderTop: "1px solid #eee", paddingTop: 10 }}>
-                CONFIDENTIAL — FOR AUTHORIZED CLINICAL USE ONLY
-              </div>
-            </div>
+          {/* Disclaimer */}
+          <div className="disclaimer" style={{ marginTop: 24, padding: "12px 16px", background: "#f8f8f8", borderLeft: "3px solid #cc0000", fontSize: 9.5, color: "#555", lineHeight: 1.6 }}>
+            <strong>{lang.disclaimer}</strong>
+            <p style={{ margin: "4px 0 0 0", fontSize: "9.5pt" }}>{lang.disclaimerText}</p>
           </div>
-        )}
+
+          {/* Footer */}
+          <div className="footer" style={{ textAlign: "center", fontFamily: "'Arial', sans-serif", fontSize: 8, color: "#999", marginTop: 30, borderTop: "1px solid #eee", paddingTop: 10 }}>
+            Generated by Psychological Assessment System
+            <br />
+            Report ID: PA-{Date.now().toString().slice(-8)} | For Personal Use Only
+          </div>
+        </div>
+
+        {/* Download Button */}
+        <div style={{ marginTop: 20, display: "flex", justifyContent: "center" }}>
+          <button
+            onClick={handlePrint}
+            style={{
+              background: "#8b0000",
+              color: "white",
+              border: "none",
+              padding: "12px 40px",
+              borderRadius: 4,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: 1,
+              transition: "background 0.2s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#6b0000"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "#8b0000"}
+          >
+            {lang.downloadPdf}
+          </button>
+        </div>
       </div>
     </div>
   );
