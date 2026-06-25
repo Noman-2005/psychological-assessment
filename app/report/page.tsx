@@ -34,92 +34,73 @@ interface AssessmentResult {
 
 // ==================== SCIENTIFIC EXPLANATIONS ====================
 const scientificExplanations: Record<string, string> = {
-  "Depression": "Depression occurs when brain chemicals called neurotransmitters (serotonin, dopamine, and norepinephrine) become imbalanced. This affects mood regulation, sleep patterns, appetite, and motivation. Genetic factors, life events, and brain structure changes can all contribute to this condition.",
+  "Depression-related symptoms": "Depression occurs when brain chemicals called neurotransmitters (serotonin, dopamine, and norepinephrine) become imbalanced. This affects mood regulation, sleep patterns, appetite, and motivation. Genetic factors, life events, and brain structure changes can all contribute to this condition.",
   
-  "Anxiety": "Anxiety is caused by overactivation of the amygdala, the brain's fear center, and an imbalance in stress hormones (cortisol and adrenaline). This triggers the body's 'fight or flight' response even when no real threat exists, leading to excessive worry, physical tension, and restlessness.",
+  "Anxiety-related symptoms": "Anxiety is caused by overactivation of the amygdala, the brain's fear center, and an imbalance in stress hormones (cortisol and adrenaline). This triggers the body's 'fight or flight' response even when no real threat exists, leading to excessive worry, physical tension, and restlessness.",
   
-  "OCD": "OCD involves hyperactivity in the brain's orbital frontal cortex and basal ganglia, which are responsible for decision-making and error detection. This creates a 'brain lock' where intrusive thoughts (obsessions) get stuck and compulsions develop as an attempt to neutralize the anxiety.",
+  "OCD-related symptoms": "OCD involves hyperactivity in the brain's orbital frontal cortex and basal ganglia, which are responsible for decision-making and error detection. This creates a 'brain lock' where intrusive thoughts (obsessions) get stuck and compulsions develop as an attempt to neutralize the anxiety.",
   
-  "PTSD": "PTSD occurs when the brain's fear response system becomes stuck in an overactive state after a traumatic event. The amygdala remains hypervigilant while the hippocampus struggles to properly process and store the memory, causing flashbacks, nightmares, and avoidance behaviors.",
+  "PTSD-related symptoms": "PTSD occurs when the brain's fear response system becomes stuck in an overactive state after a traumatic event. The amygdala remains hypervigilant while the hippocampus struggles to properly process and store the memory, causing flashbacks, nightmares, and avoidance behaviors.",
   
-  "Psychosis": "Psychosis involves disruptions in brain dopamine signaling pathways. This affects how the brain processes information, leading to unusual perceptions (hallucinations) and beliefs (delusions). The brain struggles to distinguish between internal thoughts and external reality.",
+  "Psychosis-related symptoms": "Psychosis involves disruptions in brain dopamine signaling pathways. This affects how the brain processes information, leading to unusual perceptions (hallucinations) and beliefs (delusions). The brain struggles to distinguish between internal thoughts and external reality.",
   
-  "Borderline": "BPD involves hypersensitivity in the emotional regulation centers of the brain, particularly the amygdala and prefrontal cortex. This leads to intense emotional reactions, difficulty calming down, and impulsive behaviors in response to perceived abandonment or rejection.",
+  "Borderline Personality-related symptoms": "BPD involves hypersensitivity in the emotional regulation centers of the brain, particularly the amygdala and prefrontal cortex. This leads to intense emotional reactions, difficulty calming down, and impulsive behaviors in response to perceived abandonment or rejection.",
   
-  "Narcissistic": "Narcissistic traits involve a combination of genetic predisposition, childhood experiences, and brain differences in empathy centers. These lead to an inflated self-image as a defense mechanism against deep-seated insecurities and difficulty understanding others' perspectives.",
+  "Narcissistic Personality-related symptoms": "Narcissistic traits involve a combination of genetic predisposition, childhood experiences, and brain differences in empathy centers. These lead to an inflated self-image as a defense mechanism against deep-seated insecurities and difficulty understanding others' perspectives.",
   
-  "Eating": "Eating disorders involve disruptions in brain reward and appetite centers, combined with distorted body image processing. The brain's reward system becomes misaligned, making controlling food intake feel like a way to manage emotions and self-worth.",
+  "Eating Disorder-related symptoms": "Eating disorders involve disruptions in brain reward and appetite centers, combined with distorted body image processing. The brain's reward system becomes misaligned, making controlling food intake feel like a way to manage emotions and self-worth.",
   
-  "Maladaptive": "Maladaptive daydreaming occurs when the brain's default mode network, responsible for daydreaming and mind-wandering, becomes overactive. This creates a dopamine cycle where fantasy becomes a primary source of reward, making it difficult to focus on real-life activities."
+  "Maladaptive Daydreaming": "Maladaptive daydreaming occurs when the brain's default mode network, responsible for daydreaming and mind-wandering, becomes overactive. This creates a dopamine cycle where fantasy becomes a primary source of reward, making it difficult to focus on real-life activities."
 };
 
 // ==================== COMMON SYMPTOMS ====================
 const commonSymptoms: Record<string, string[]> = {
-  "Depression": [
+  "Depression-related symptoms": [
     "Persistent sadness, emptiness, or low mood",
     "Loss of interest or pleasure in activities once enjoyed",
-    "Fatigue, low energy, or feeling slowed down",
-    "Changes in sleep or appetite"
+    "Fatigue, low energy, or feeling slowed down"
   ],
-  "Anxiety": [
+  "Anxiety-related symptoms": [
     "Excessive worry about everyday situations",
     "Restlessness or feeling on edge",
-    "Difficulty concentrating or mind going blank",
-    "Physical tension or sleep disturbances"
+    "Difficulty concentrating or mind going blank"
   ],
-  "OCD": [
+  "OCD-related symptoms": [
     "Recurring, unwanted thoughts (obsessions)",
     "Repeated actions or rituals (compulsions)",
-    "Intense anxiety if rituals are not performed",
-    "Significant time spent on rituals"
+    "Intense anxiety if rituals are not performed"
   ],
-  "PTSD": [
+  "PTSD-related symptoms": [
     "Flashbacks or nightmares of traumatic events",
     "Avoiding reminders of the trauma",
-    "Hypervigilance or being easily startled",
-    "Negative changes in mood or thinking"
+    "Hypervigilance or being easily startled"
   ],
-  "Psychosis": [
+  "Psychosis-related symptoms": [
     "Hearing voices or seeing things others don't",
     "Unusual or unrealistic beliefs (delusions)",
-    "Disorganized speech or thinking",
-    "Difficulty distinguishing reality from imagination"
+    "Disorganized speech or thinking"
   ],
-  "Borderline": [
+  "Borderline Personality-related symptoms": [
     "Intense, unstable relationships",
     "Sudden mood swings and intense anger",
-    "Fear of abandonment and feelings of emptiness",
-    "Impulsive or self-destructive behaviors"
+    "Fear of abandonment and feelings of emptiness"
   ],
-  "Narcissistic": [
+  "Narcissistic Personality-related symptoms": [
     "Inflated sense of self-importance",
     "Need for excessive admiration",
-    "Lack of empathy for others",
-    "Belief in being special or unique"
+    "Lack of empathy for others"
   ],
-  "Eating": [
+  "Eating Disorder-related symptoms": [
     "Preoccupation with weight and body shape",
     "Severe restriction of food intake",
-    "Binge eating followed by purging behaviors",
-    "Distorted body image"
+    "Binge eating followed by purging behaviors"
   ],
-  "Maladaptive": [
+  "Maladaptive Daydreaming": [
     "Spending hours lost in fantasy worlds",
     "Difficulty stopping daydreams",
-    "Interferes with daily activities and responsibilities",
-    "Physical movements or expressions while daydreaming"
+    "Interferes with daily activities and responsibilities"
   ]
 };
-
-// ==================== DEFAULT FINDING NAMES ====================
-const defaultFindingNames = [
-  "Psychological Symptoms Detected",
-  "Mental Health Concerns Identified",
-  "Cognitive Patterns Observed",
-  "Emotional Regulation Difficulties",
-  "Behavioral Patterns Identified",
-  "Stress-Related Symptoms Detected"
-];
 
 // ==================== MAIN COMPONENT ====================
 export default function ReportPage() {
@@ -143,13 +124,7 @@ export default function ReportPage() {
       if (data) {
         const parsed = JSON.parse(data);
         console.log("✅ Full data structure:", parsed);
-        console.log("✅ Findings:", parsed.findings);
-        if (parsed.findings && parsed.findings.length > 0) {
-          console.log("✅ First finding:", parsed.findings[0]);
-          console.log("✅ Condition:", parsed.findings[0].condition);
-          console.log("✅ Description:", parsed.findings[0].description);
-          console.log("✅ Recommendation:", parsed.findings[0].recommendation);
-        }
+        console.log("✅ Findings count:", parsed.findings?.length || 0);
         setResult(parsed);
       } else {
         console.log("❌ No data found");
@@ -164,51 +139,29 @@ export default function ReportPage() {
   // ===== GET SCIENTIFIC EXPLANATION =====
   const getScientificExplanation = (condition: string): string => {
     // Try exact match first
+    if (scientificExplanations[condition]) {
+      return scientificExplanations[condition];
+    }
+    // Try partial match
     for (const [key, value] of Object.entries(scientificExplanations)) {
-      if (condition.includes(key) || key.includes(condition)) {
+      if (condition.includes(key.split(" ")[0]) || condition === key) {
         return value;
       }
     }
-    return "This condition involves complex interactions between brain chemistry, neural pathways, and environmental factors. Professional evaluation can provide more detailed insights.";
+    return condition + " involves complex interactions between brain chemistry, neural pathways, and environmental factors. Professional evaluation can provide more detailed insights.";
   };
 
   // ===== GET COMMON SYMPTOMS =====
   const getCommonSymptoms = (condition: string): string[] => {
+    if (commonSymptoms[condition]) {
+      return commonSymptoms[condition];
+    }
     for (const [key, value] of Object.entries(commonSymptoms)) {
-      if (condition.includes(key) || key.includes(condition)) {
+      if (condition.includes(key.split(" ")[0]) || condition === key) {
         return value;
       }
     }
-    return [
-      "Varies based on individual experience",
-      "Professional evaluation recommended",
-      "May include emotional, cognitive, or behavioral changes"
-    ];
-  };
-
-  // ===== GET CONDITION NAME =====
-  const getConditionName = (finding: Finding, index: number): string => {
-    // Try to get from finding
-    let name = finding.condition || finding.name || "";
-    
-    // If empty, try to extract from description
-    if (!name && finding.description) {
-      const desc = finding.description;
-      const keywords = ["depression", "anxiety", "ocd", "ptsd", "psychosis", "borderline", "narcissistic", "eating", "maladaptive"];
-      for (const keyword of keywords) {
-        if (desc.toLowerCase().includes(keyword)) {
-          name = keyword.charAt(0).toUpperCase() + keyword.slice(1);
-          break;
-        }
-      }
-    }
-    
-    // If still empty, use default
-    if (!name) {
-      name = defaultFindingNames[index % defaultFindingNames.length];
-    }
-    
-    return name;
+    return ["Varies based on individual experience", "Professional evaluation recommended"];
   };
 
   // ===== PDF PRINT HANDLER =====
@@ -335,8 +288,7 @@ export default function ReportPage() {
       disclaimer: "Disclaimer",
       disclaimerText: "This is an automated screening report for informational purposes only. It does not constitute a medical diagnosis. Never make any medication decisions based solely on this assessment. If you are experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately.",
       downloadPdf: "⬇ Download PDF",
-      backToAssessment: "← Back to Assessment",
-      identifiedConcerns: "Identified Concerns"
+      backToAssessment: "← Back to Assessment"
     },
     bn: {
       title: "স্বয়ংক্রিয় গোপনীয় মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন",
@@ -351,8 +303,7 @@ export default function ReportPage() {
       disclaimer: "দাবিত্যাগ",
       disclaimerText: "এটি একটি স্বয়ংক্রিয় স্ক্রীনিং প্রতিবেদন যা শুধুমাত্র তথ্যগত উদ্দেশ্যে। এটি কোনো চিকিৎসা নির্ণয় নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।",
       downloadPdf: "⬇ পিডিএফ ডাউনলোড করুন",
-      backToAssessment: "← মূল্যায়নে ফিরে যান",
-      identifiedConcerns: "শনাক্তকৃত উদ্বেগ"
+      backToAssessment: "← মূল্যায়নে ফিরে যান"
     }
   };
 
@@ -466,34 +417,24 @@ export default function ReportPage() {
           {/* ===== FINDINGS ===== */}
           {result.findings && result.findings.length > 0 && (
             <>
-              <h2 style={{ marginTop: 24 }}>{lang.identifiedConcerns}</h2>
+              <h2 style={{ marginTop: 24 }}>{language === "en" ? "Identified Concerns" : "শনাক্তকৃত উদ্বেগ"}</h2>
               
               {result.findings.map((finding, index) => {
-                // --- GET CONDITION NAME ---
-                let conditionName = getConditionName(finding, index);
+                // GET CONDITION NAME - FIX FOR MISSING DATA
+                const conditionName = finding.condition || "Unknown Condition";
                 
-                // --- GET SEVERITY ---
-                const severity = finding.severity || "Moderate";
+                // GET SEVERITY
+                const severity = finding.severity || "Low";
                 const severityColor = severity === "High" ? "#cc0000" : severity === "Moderate" ? "#cc8800" : "#2d7d2d";
                 
-                // --- GET EXPLANATION ---
-                let explanation = finding.description || "";
-                if (!explanation || explanation.length < 10) {
-                  explanation = getScientificExplanation(conditionName);
-                }
+                // GET EXPLANATION
+                const explanation = getScientificExplanation(conditionName);
                 
-                // --- GET SYMPTOMS ---
+                // GET SYMPTOMS
                 const symptoms = getCommonSymptoms(conditionName);
                 
-                // --- GET RECOMMENDATION ---
-                let recommendation = finding.recommendation || "";
-                if (!recommendation || recommendation.length < 10) {
-                  recommendation = "Consider consulting a mental health professional for a comprehensive evaluation and personalized treatment plan.";
-                }
-                
-                // --- GET SCORE ---
-                const score = finding.score || 0;
-                const maxScore = finding.maxScore || 15;
+                // GET RECOMMENDATION
+                const recommendation = finding.recommendation || "Please consult a mental health professional for personalized guidance.";
                 
                 return (
                   <div key={index} className={`finding-block ${severity.toLowerCase()}`} style={{ 
@@ -511,7 +452,7 @@ export default function ReportPage() {
                     </h3>
                     
                     <p style={{ margin: "2px 0 6px 0", fontSize: "10pt", color: "#555" }}>
-                      <strong>{language === "en" ? "Score" : "স্কোর"}:</strong> {score}/{maxScore}
+                      <strong>{language === "en" ? "Score" : "স্কোর"}:</strong> {finding.score || 0}/{finding.maxScore || 0}
                     </p>
 
                     {/* Scientific Explanation */}
