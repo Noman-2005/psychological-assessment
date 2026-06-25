@@ -42,21 +42,53 @@ export default function ReportPage() {
 
   // ===== LOAD DATA FROM LOCALSTORAGE =====
   useEffect(() => {
-    try {
-      const data = localStorage.getItem("reportData");
-      console.log("🔍 Raw data from localStorage:", data);
-      
-      if (data) {
+    // Try multiple ways to get data
+    let data = localStorage.getItem("reportData");
+    
+    // If not in localStorage, try sessionStorage
+    if (!data) {
+      data = sessionStorage.getItem("reportData");
+    }
+    
+    console.log("🔍 Raw data from storage:", data);
+    
+    if (data) {
+      try {
         const parsed = JSON.parse(data);
         console.log("✅ Parsed data:", parsed);
         setResult(parsed);
-      } else {
-        console.log("❌ No data found in localStorage");
+        // Keep the data in storage for potential reloads
+        // localStorage.removeItem("reportData");
+      } catch (e) {
+        console.error("❌ Error parsing report data:", e);
       }
-    } catch (error) {
-      console.error("❌ Error loading report data:", error);
+    } else {
+      console.log("❌ No data found in storage");
+      // Try to get from URL query params as fallback
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlData = urlParams.get("data");
+      if (urlData) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(urlData));
+          console.log("✅ Parsed from URL:", parsed);
+          setResult(parsed);
+        } catch (e) {
+          console.error("❌ Error parsing URL data:", e);
+        }
+      }
     }
     setLoading(false);
+  }, []);
+
+  // ===== SAVE DATA TO SESSIONSTORAGE ON PAGE LOAD =====
+  // This ensures data persists across navigation
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const data = localStorage.getItem("reportData");
+      if (data) {
+        sessionStorage.setItem("reportData", data);
+      }
+    }
   }, []);
 
   // ===== GET SCIENTIFIC EXPLANATION FOR EACH DISORDER =====
@@ -81,7 +113,6 @@ export default function ReportPage() {
       "Maladaptive Daydreaming": "Maladaptive daydreaming occurs when the brain's default mode network, responsible for daydreaming and mind-wandering, becomes overactive. This creates a dopamine cycle where fantasy becomes a primary source of reward, making it difficult to focus on real-life activities."
     };
 
-    // Find matching explanation
     for (const [key, value] of Object.entries(explanations)) {
       if (condition.includes(key.split(" ")[0]) || condition === key) {
         return value;
@@ -246,7 +277,6 @@ export default function ReportPage() {
           <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
           <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
           <p style={{ color: "#666", marginBottom: 16 }}>Please complete the assessment first.</p>
-          <p style={{ color: "#999", fontSize: 12, marginBottom: 16 }}>Redirecting to assessment...</p>
           <button
             onClick={() => router.push("/")}
             style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 24px", borderRadius: 4, fontSize: 14, cursor: "pointer" }}
