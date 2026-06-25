@@ -1787,10 +1787,9 @@ export default function Home() {
               <button
   onClick={() => {
     if (result) {
-      // Save the result data to localStorage
-      localStorage.setItem('reportData', JSON.stringify(result));
-      // Navigate to the report page
-      router.push('/report');
+      // Encode the data and pass it as a URL parameter
+      const encodedData = encodeURIComponent(JSON.stringify(result));
+      router.push(`/report?data=${encodedData}`);
     }
   }}
   className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/80 text-white font-medium transition-all transform hover:scale-[1.02] text-center"

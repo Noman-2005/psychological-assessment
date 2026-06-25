@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 // ==================== TYPES ====================
 interface Exercise {
@@ -32,64 +33,60 @@ interface AssessmentResult {
   timestamp: string;
 }
 
+// ==================== WRAPPER WITH SUSPENSE ====================
+export default function ReportPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "#8b0000" }}>Loading Report...</div>
+          <div style={{ marginTop: 8, color: "#666" }}>Please wait</div>
+        </div>
+      </div>
+    }>
+      <ReportPage />
+    </Suspense>
+  );
+}
+
+export const dynamic = 'force-dynamic';
+
 // ==================== MAIN COMPONENT ====================
-export default function ReportPage() {
+function ReportPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<"en" | "bn">("en");
   const printRef = useRef<HTMLDivElement>(null);
 
-  // ===== LOAD DATA FROM LOCALSTORAGE =====
+  // ===== LOAD DATA FROM URL =====
   useEffect(() => {
-    // Try multiple ways to get data
-    let data = localStorage.getItem("reportData");
-    
-    // If not in localStorage, try sessionStorage
-    if (!data) {
-      data = sessionStorage.getItem("reportData");
-    }
-    
-    console.log("🔍 Raw data from storage:", data);
-    
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
+    try {
+      // Get data from URL parameter
+      const dataParam = searchParams.get("data");
+      console.log("🔍 Data from URL:", dataParam);
+      
+      if (dataParam) {
+        const parsed = JSON.parse(decodeURIComponent(dataParam));
         console.log("✅ Parsed data:", parsed);
         setResult(parsed);
-        // Keep the data in storage for potential reloads
-        // localStorage.removeItem("reportData");
-      } catch (e) {
-        console.error("❌ Error parsing report data:", e);
-      }
-    } else {
-      console.log("❌ No data found in storage");
-      // Try to get from URL query params as fallback
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlData = urlParams.get("data");
-      if (urlData) {
-        try {
-          const parsed = JSON.parse(decodeURIComponent(urlData));
-          console.log("✅ Parsed from URL:", parsed);
+      } else {
+        // Fallback: try localStorage
+        const localData = localStorage.getItem("reportData");
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          console.log("✅ Parsed from localStorage:", parsed);
           setResult(parsed);
-        } catch (e) {
-          console.error("❌ Error parsing URL data:", e);
+        } else {
+          console.log("❌ No data found");
         }
       }
+    } catch (error) {
+      console.error("❌ Error loading report data:", error);
     }
     setLoading(false);
-  }, []);
-
-  // ===== SAVE DATA TO SESSIONSTORAGE ON PAGE LOAD =====
-  // This ensures data persists across navigation
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const data = localStorage.getItem("reportData");
-      if (data) {
-        sessionStorage.setItem("reportData", data);
-      }
-    }
-  }, []);
+  }, [searchParams]);
 
   // ===== GET SCIENTIFIC EXPLANATION FOR EACH DISORDER =====
   const getScientificExplanation = (condition: string): string => {
