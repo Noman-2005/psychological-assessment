@@ -41,15 +41,22 @@ export default function ReportPage() {
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Try to get data from localStorage
     const data = localStorage.getItem("reportData");
+    console.log("Raw data from localStorage:", data); // Debug log
+    
     if (data) {
       try {
         const parsed = JSON.parse(data);
+        console.log("Parsed data:", parsed); // Debug log
         setResult(parsed);
-        localStorage.removeItem("reportData");
+        // Don't remove immediately - keep it for the report
+        // localStorage.removeItem("reportData");
       } catch (e) {
         console.error("Error parsing report data:", e);
       }
+    } else {
+      console.log("No data found in localStorage");
     }
     setLoading(false);
   }, []);
@@ -127,7 +134,7 @@ export default function ReportPage() {
   if (!result) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
-        <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)" }}>
+        <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", maxWidth: 500 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
           <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
           <p style={{ color: "#666", marginBottom: 16 }}>Please complete the assessment first.</p>
@@ -226,6 +233,9 @@ export default function ReportPage() {
       minute: "2-digit"
     });
   };
+
+  // Debug log to see what data we have
+  console.log("Result data in render:", result);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f4f0", fontFamily: "'Georgia', serif", padding: "20px" }}>
