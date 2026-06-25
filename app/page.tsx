@@ -1955,6 +1955,8 @@ export default function Home() {
 
 // ==================== PROFESSIONAL AI-GENERATED DIGITAL REPORT ====================
 
+// ==================== PROFESSIONAL AI-GENERATED DIGITAL REPORT ====================
+
 function generateReport(result: AssessmentResult, language: Language): string {
   const date = new Date(result.timestamp);
   const formattedDate = date.toLocaleDateString(language === "en" ? "en-US" : "bn-BD", {
@@ -1967,7 +1969,7 @@ function generateReport(result: AssessmentResult, language: Language): string {
 
   const lines: string[] = [];
 
-  // ===== HEADER WITH LOGO =====
+  // ===== HEADER WITH PROFESSIONAL FORMAT =====
   lines.push("╔══════════════════════════════════════════════════════════════════════════════╗");
   lines.push("║                                                                            ║");
   lines.push("║                         🧠 PSYCHOLOGICAL ASSESSMENT                        ║");
@@ -2003,13 +2005,15 @@ function generateReport(result: AssessmentResult, language: Language): string {
   lines.push("  📋 PROCEDURES FOR EVALUATION");
   lines.push("  ──────────────────────────────────────────────────────────────────────────────");
   lines.push("");
-  lines.push("  • AI-Powered Psychological Screening Questionnaire (79 items)");
+  lines.push("  The following standardized procedures were utilized in this evaluation:");
+  lines.push("");
+  lines.push("  • Comprehensive Psychological Screening Questionnaire (79 items)");
   lines.push("  • Multi-domain symptom assessment covering 8 clinical areas");
   lines.push("  • Severity rating scale analysis (Likert-scale scoring)");
   lines.push("  • Clinical indicator pattern recognition");
   lines.push("  • Evidence-based recommendation algorithm");
   lines.push("  • Cross-domain symptom correlation analysis");
-  lines.push("  • Risk level stratification");
+  lines.push("  • Risk level stratification protocol");
   lines.push("");
 
   // ===== ASSESSMENT SUMMARY =====
@@ -2098,7 +2102,7 @@ function generateReport(result: AssessmentResult, language: Language): string {
           lines.push(`       • ${ex.title[language]}`);
           lines.push(`         ${ex.description[language]}`);
           if (ex.steps) {
-            lines.push(`         Steps:`);
+            lines.push(`         Implementation Steps:`);
             ex.steps[language].forEach((step, i) => {
               lines.push(`           ${i + 1}. ${step}`);
             });
@@ -2219,6 +2223,17 @@ function generateReport(result: AssessmentResult, language: Language): string {
   lines.push("  encouraged to ask questions regarding the assessment process prior to");
   lines.push("  completing the screening. Informed consent was obtained before proceeding");
   lines.push("  with the assessment.");
+  lines.push("");
+
+  // ===== SIGNATURES =====
+  lines.push("  📋 SIGNATURES");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
+  lines.push("");
+  lines.push("  _________________________________________");
+  lines.push("  Licensed Psychologist / Evaluator");
+  lines.push("");
+  lines.push("  License Number: _________________________");
+  lines.push("  Date: ___________________________________");
   lines.push("");
 
   // ===== DISCLAIMER =====
