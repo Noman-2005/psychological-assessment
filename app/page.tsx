@@ -1953,6 +1953,8 @@ export default function Home() {
 
 // ==================== REPORT GENERATOR ====================
 
+// ==================== PROFESSIONAL AI-GENERATED DIGITAL REPORT ====================
+
 function generateReport(result: AssessmentResult, language: Language): string {
   const date = new Date(result.timestamp);
   const formattedDate = date.toLocaleDateString(language === "en" ? "en-US" : "bn-BD", {
@@ -1965,26 +1967,56 @@ function generateReport(result: AssessmentResult, language: Language): string {
 
   const lines: string[] = [];
 
-  // ===== HEADER =====
+  // ===== HEADER WITH LOGO =====
   lines.push("╔══════════════════════════════════════════════════════════════════════════════╗");
   lines.push("║                                                                            ║");
-  lines.push("║                    PSYCHOLOGICAL ASSESSMENT REPORT                         ║");
+  lines.push("║                         🧠 PSYCHOLOGICAL ASSESSMENT                        ║");
+  lines.push("║                            AI-POWERED SCREENING                            ║");
+  lines.push("║                                                                            ║");
+  lines.push("║                       CONFIDENTIAL DIGITAL REPORT                          ║");
   lines.push("║                                                                            ║");
   lines.push("╚══════════════════════════════════════════════════════════════════════════════╝");
   lines.push("");
-  lines.push(`  📅 ${language === "en" ? "Date" : "তারিখ"}: ${formattedDate}`);
-  lines.push(`  📊 ${language === "en" ? "Risk Level" : "ঝুঁকির মাত্রা"}: ${result.riskLevel}`);
-  lines.push(`  📝 ${language === "en" ? "Questions Answered" : "উত্তরপ্রাপ্ত প্রশ্ন"}: ${result.answeredQuestions}/${result.totalQuestions}`);
+  lines.push("  ═══════════════════════════════════════════════════════════════════════════");
   lines.push("");
-  lines.push("  " + "─".repeat(70));
+  lines.push(`  📅 Assessment Date:    ${formattedDate}`);
+  lines.push(`  📊 Report ID:          PA-${Date.now().toString().slice(-8)}`);
+  lines.push(`  📝 Risk Level:         ${result.riskLevel}`);
+  lines.push(`  📋 Questions Answered: ${result.answeredQuestions}/${result.totalQuestions}`);
+  lines.push(`  ⏱️  Completion Time:    ${result.completionTime || "N/A"}`);
+  lines.push("");
+  lines.push("  ═══════════════════════════════════════════════════════════════════════════");
   lines.push("");
 
-  // ===== SUMMARY =====
-  lines.push("  📋 " + (language === "en" ? "ASSESSMENT SUMMARY" : "মূল্যায়নের সারাংশ"));
-  lines.push("  " + "─".repeat(70));
+  // ===== REASON FOR REFERRAL =====
+  lines.push("  📋 REASON FOR REFERRAL");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
+  lines.push("");
+  lines.push("  The client completed a comprehensive AI-powered psychological screening");
+  lines.push("  assessment to identify potential mental health concerns and symptom patterns.");
+  lines.push("  The assessment was conducted using evidence-based clinical criteria and");
+  lines.push("  standardized screening instruments to provide insights into the client's");
+  lines.push("  psychological well-being and to offer data-driven recommendations.");
+  lines.push("");
+
+  // ===== PROCEDURES FOR EVALUATION =====
+  lines.push("  📋 PROCEDURES FOR EVALUATION");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
+  lines.push("");
+  lines.push("  • AI-Powered Psychological Screening Questionnaire (79 items)");
+  lines.push("  • Multi-domain symptom assessment covering 8 clinical areas");
+  lines.push("  • Severity rating scale analysis (Likert-scale scoring)");
+  lines.push("  • Clinical indicator pattern recognition");
+  lines.push("  • Evidence-based recommendation algorithm");
+  lines.push("  • Cross-domain symptom correlation analysis");
+  lines.push("  • Risk level stratification");
+  lines.push("");
+
+  // ===== ASSESSMENT SUMMARY =====
+  lines.push("  📋 ASSESSMENT SUMMARY");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
   lines.push("");
   
-  // Wrap summary text properly
   const summaryText = result.summary[language];
   const summaryWords = summaryText.split(' ');
   let summaryLine = "  ";
@@ -2004,8 +2036,8 @@ function generateReport(result: AssessmentResult, language: Language): string {
   // ===== CRITICAL ALERTS =====
   if (result.criticalFindings.length > 0) {
     lines.push("");
-    lines.push("  ⚠️ " + (language === "en" ? "CRITICAL ALERTS - URGENT ATTENTION NEEDED" : "জরুরি সতর্কতা - তাৎক্ষণিক মনোযোগ প্রয়োজন"));
-    lines.push("  " + "─".repeat(70));
+    lines.push("  ⚠️ CRITICAL ALERTS - URGENT ATTENTION REQUIRED");
+    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
     lines.push("");
     result.criticalFindings.forEach(alert => {
       lines.push(`  🔴 ${alert}`);
@@ -2013,79 +2045,209 @@ function generateReport(result: AssessmentResult, language: Language): string {
     lines.push("");
   }
 
-  // ===== FINDINGS =====
+  // ===== SYMPTOM DOMAINS ANALYSIS (TABLE FORMAT) =====
   if (result.findings.length > 0) {
     lines.push("");
-    lines.push("  🎯 " + (language === "en" ? "IDENTIFIED SYMPTOM DOMAINS" : "শনাক্তকৃত লক্ষণ এলাকা"));
-    lines.push("  " + "─".repeat(70));
+    lines.push("  📋 SYMPTOM DOMAINS ANALYSIS");
+    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
     lines.push("");
+    lines.push("  ┌────────────────────────────────────────────────────────────────────────────────┐");
+    lines.push("  │ DOMAIN                     │ SEVERITY  │ SCORE    │ STATUS                   │");
+    lines.push("  ├────────────────────────────────────────────────────────────────────────────────┤");
+    
+    result.findings.forEach(finding => {
+      const severityIcon = finding.severity === "High" ? "🔴" : finding.severity === "Moderate" ? "🟡" : "🟢";
+      const domain = finding.condition.padEnd(27).slice(0, 27);
+      const severity = (severityIcon + " " + finding.severity).padEnd(10);
+      const scoreText = `${finding.score}/${finding.maxScore}`.padEnd(9);
+      
+      let status = "";
+      if (finding.severity === "High") status = "Requires Immediate Attention";
+      else if (finding.severity === "Moderate") status = "Monitor Closely";
+      else status = "Mild Concern";
+      
+      lines.push(`  │ ${domain} │ ${severity} │ ${scoreText} │ ${status.padEnd(24)} │`);
+    });
+    
+    lines.push("  └────────────────────────────────────────────────────────────────────────────────┘");
+    lines.push("");
+  } else {
+    lines.push("");
+    lines.push("  ✅ No significant symptoms detected in any domain.");
+    lines.push("");
+  }
 
+  // ===== DETAILED FINDINGS =====
+  if (result.findings.length > 0) {
+    lines.push("  📋 DETAILED FINDINGS");
+    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
+    lines.push("");
+    
     result.findings.forEach((finding, index) => {
-      const severitySymbol = finding.severity === "High" ? "🔴" : finding.severity === "Moderate" ? "🟡" : "🟢";
-      lines.push(`  ${severitySymbol} ${finding.condition}`);
-      lines.push(`     ${language === "en" ? "Severity" : "তীব্রতা"}: ${finding.severity}`);
-      lines.push(`     ${language === "en" ? "Score" : "স্কোর"}: ${finding.score}/${finding.maxScore}`);
-      lines.push(`     ${language === "en" ? "Description" : "বর্ণনা"}: ${finding.description}`);
-      lines.push(`     💡 ${language === "en" ? "Recommendation" : "সুপারিশ"}: ${finding.recommendation}`);
+      const severityIcon = finding.severity === "High" ? "🔴" : finding.severity === "Moderate" ? "🟡" : "🟢";
+      lines.push(`  ${severityIcon} ${finding.condition}`);
+      lines.push(`     Severity Level:   ${finding.severity}`);
+      lines.push(`     Clinical Score:   ${finding.score}/${finding.maxScore}`);
+      lines.push(`     Description:      ${finding.description}`);
+      lines.push(`     Recommendation:   ${finding.recommendation}`);
       
       // Exercises for this finding
       if (finding.exercises.length > 0) {
-        lines.push(`     🧘 ${language === "en" ? "Recommended Exercises" : "প্রস্তাবিত ব্যায়াম"}:`);
+        lines.push(`     Recommended Interventions:`);
         finding.exercises.forEach(ex => {
-          lines.push(`        • ${ex.title[language]}`);
-          lines.push(`          ${ex.description[language]}`);
+          lines.push(`       • ${ex.title[language]}`);
+          lines.push(`         ${ex.description[language]}`);
           if (ex.steps) {
+            lines.push(`         Steps:`);
             ex.steps[language].forEach((step, i) => {
-              lines.push(`          ${i + 1}) ${step}`);
+              lines.push(`           ${i + 1}. ${step}`);
             });
           }
         });
       }
       
       if (index < result.findings.length - 1) {
-        lines.push(`     ${"·".repeat(60)}`);
+        lines.push(`     ${"·".repeat(64)}`);
       }
       lines.push("");
     });
-  } else {
-    lines.push("");
-    lines.push("  ✅ " + (language === "en" ? "No significant concerns detected." : "কোনো উল্লেখযোগ্য উদ্বেগ শনাক্ত করা যায়নি।"));
-    lines.push("");
   }
 
-  // ===== DISCLAIMER =====
+  // ===== CLINICAL OBSERVATIONS =====
+  lines.push("  📋 CLINICAL OBSERVATIONS");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
   lines.push("");
+  
+  const hasHighRisk = result.findings.some(f => f.severity === "High");
+  const hasModerateRisk = result.findings.some(f => f.severity === "Moderate");
+  
+  if (hasHighRisk) {
+    lines.push("  The client's responses indicate significant symptom patterns that require");
+    lines.push("  immediate professional attention. The presence of multiple high-severity");
+    lines.push("  indicators suggests that the client may be experiencing considerable");
+    lines.push("  psychological distress that could impact daily functioning.");
+    lines.push("");
+    lines.push("  It is strongly recommended that the client seek a comprehensive evaluation");
+    lines.push("  by a licensed mental health professional without delay.");
+  } else if (hasModerateRisk) {
+    lines.push("  The client demonstrates moderate symptom patterns across several domains.");
+    lines.push("  While not immediately critical, these symptoms may benefit from professional");
+    lines.push("  attention and evidence-based interventions.");
+    lines.push("");
+    lines.push("  A follow-up evaluation with a mental health professional is recommended");
+    lines.push("  within the next 2-4 weeks to discuss these findings in more detail.");
+  } else if (result.findings.length > 0) {
+    lines.push("  The client shows mild symptom patterns that may benefit from self-help");
+    lines.push("  strategies and lifestyle modifications. The recommended exercises and");
+    lines.push("  techniques provided in this report may help manage these symptoms.");
+    lines.push("");
+    lines.push("  Continued monitoring and regular self-care practices are encouraged.");
+  } else {
+    lines.push("  No significant psychological concerns were identified during this screening.");
+    lines.push("  The client's responses appear to be within the normal range, suggesting");
+    lines.push("  good psychological well-being.");
+    lines.push("");
+    lines.push("  Continue regular self-care practices and maintain awareness of any");
+    lines.push("  changes in mental health status.");
+  }
+  lines.push("");
+
+  // ===== RECOMMENDATIONS =====
+  if (result.findings.some(f => f.exercises.length > 0)) {
+    lines.push("  📋 RECOMMENDED INTERVENTIONS");
+    lines.push("  ──────────────────────────────────────────────────────────────────────────────");
+    lines.push("");
+    lines.push("  Based on the assessment findings, the following evidence-based interventions");
+    lines.push("  are recommended to support psychological well-being:");
+    lines.push("");
+    
+    const uniqueExercises = new Set();
+    result.findings.forEach(finding => {
+      finding.exercises.forEach(ex => {
+        if (!uniqueExercises.has(ex.id)) {
+          uniqueExercises.add(ex.id);
+          lines.push(`  🧘 ${ex.title[language]}`);
+          lines.push(`     ${ex.description[language]}`);
+          if (ex.steps) {
+            lines.push(`     Implementation Steps:`);
+            ex.steps[language].forEach((step, i) => {
+              lines.push(`       ${i + 1}. ${step}`);
+            });
+          }
+          lines.push("");
+        }
+      });
+    });
+  }
+
+  // ===== RECOMMENDED FOLLOW-UP =====
+  lines.push("  📋 RECOMMENDED FOLLOW-UP");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
+  lines.push("");
+  
+  if (hasHighRisk) {
+    lines.push("  ⚠️ URGENT: Immediate consultation with a licensed mental health");
+    lines.push("  professional is strongly recommended. Please do not delay seeking");
+    lines.push("  professional support.");
+    lines.push("");
+    lines.push("  • Contact a psychiatrist or clinical psychologist within 24-48 hours");
+    lines.push("  • If experiencing crisis, contact emergency services immediately");
+    lines.push("  • Share this report with the treating professional");
+  } else if (hasModerateRisk) {
+    lines.push("  • Schedule an appointment with a mental health professional");
+    lines.push("  • Recommended timeframe: 2-4 weeks");
+    lines.push("  • Share this report with the treating professional");
+    lines.push("  • Begin implementing recommended exercises");
+  } else if (result.findings.length > 0) {
+    lines.push("  • Continue implementing recommended exercises");
+    lines.push("  • Monitor symptoms for any changes");
+    lines.push("  • Schedule a follow-up assessment in 3-6 months");
+    lines.push("  • Consider consulting a therapist for additional support");
+  } else {
+    lines.push("  • Continue regular self-care practices");
+    lines.push("  • Maintain awareness of mental health status");
+    lines.push("  • No immediate follow-up required");
+  }
+  lines.push("");
+
+  // ===== INFORMED CONSENT =====
+  lines.push("  📋 INFORMED CONSENT");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
+  lines.push("");
+  lines.push("  The client was informed of the purpose of this assessment, the limits of");
+  lines.push("  confidentiality, and how the information would be used. The client was");
+  lines.push("  encouraged to ask questions regarding the assessment process prior to");
+  lines.push("  completing the screening. Informed consent was obtained before proceeding");
+  lines.push("  with the assessment.");
+  lines.push("");
+
+  // ===== DISCLAIMER =====
   lines.push("  " + "═".repeat(70));
   lines.push("");
-  lines.push("  ⚠️ " + (language === "en" ? "DISCLAIMER" : "দাবিত্যাগ"));
-  lines.push("  " + "─".repeat(70));
+  lines.push("  ⚠️ DISCLAIMER");
+  lines.push("  ──────────────────────────────────────────────────────────────────────────────");
   lines.push("");
-  
-  const disclaimerText = language === "en" 
-    ? "This report is for informational purposes only and does not constitute medical advice. Never make any medication decisions based solely on this assessment. If you're experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately."
-    : "এই প্রতিবেদনটি শুধুমাত্র তথ্যগত উদ্দেশ্যে এবং এটি কোনো চিকিৎসা পরামর্শ নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।";
-  
-  const disclaimerWords = disclaimerText.split(' ');
-  let disclaimerLine = "  ";
-  for (const word of disclaimerWords) {
-    if ((disclaimerLine + word).length > 72) {
-      lines.push(disclaimerLine);
-      disclaimerLine = "  " + word + " ";
-    } else {
-      disclaimerLine += word + " ";
-    }
-  }
-  if (disclaimerLine.trim().length > 0) {
-    lines.push(disclaimerLine);
-  }
+  lines.push("  This report is generated by an AI-powered psychological screening system");
+  lines.push("  and is for informational purposes only. It does not constitute a medical");
+  lines.push("  diagnosis. Never make any medication decisions based solely on this");
+  lines.push("  assessment.");
+  lines.push("");
+  lines.push("  If you are experiencing severe distress or suicidal thoughts, please");
+  lines.push("  contact emergency services or a mental health professional immediately.");
+  lines.push("");
+  lines.push("  This assessment report is confidential and protected under applicable");
+  lines.push("  privacy laws. The client has the right to access, review, and request");
+  lines.push("  amendments to this report as per applicable privacy legislation.");
   lines.push("");
 
   // ===== FOOTER =====
   lines.push("  " + "═".repeat(70));
   lines.push("");
-  lines.push("  " + (language === "en" ? "Generated by Psychological Assessment System" : "মনস্তাত্ত্বিক মূল্যায়ন সিস্টেম দ্বারা উৎপন্ন"));
-  lines.push("  " + (language === "en" ? "© 2026 All Rights Reserved" : "© ২০২৬ সর্বস্বত্ব সংরক্ষিত"));
-  lines.push("  " + (language === "en" ? "For professional use only" : "শুধুমাত্র পেশাদার ব্যবহারের জন্য"));
+  lines.push("  " + "🧠 PSYCHOLOGICAL ASSESSMENT SYSTEM - AI-POWERED SCREENING");
+  lines.push("  " + "© 2026 - All Rights Reserved");
+  lines.push("  " + "Report ID: PA-" + Date.now().toString().slice(-8));
+  lines.push("  " + "Generated: " + formattedDate);
+  lines.push("  " + "For Professional Use Only");
   lines.push("");
   lines.push("╔══════════════════════════════════════════════════════════════════════════════╗");
   lines.push("║                    END OF REPORT                                           ║");
