@@ -93,30 +93,52 @@ export default function ReportPage() {
     try { return new Date(ts).toLocaleDateString(language === "bn" ? "bn-BD" : "en-GB", { day: "2-digit", month: "long", year: "numeric" }) } catch { return ts }
   };
 
-  const handlePDF = async () => {
-    if (!reportRef.current) return;
-    setIsExporting(true);
-    try {
-      const h2c = (await import("html2canvas")).default;
-      const jsPDF = (await import("jspdf")).default;
-      const canvas = await h2c(reportRef.current, { 
-        scale: 3, 
-        useCORS: true, 
-        backgroundColor: "#f4ecdb", 
-        logging: false,
-        width: 1200,
-        height: 1600
-      });
-      const img = canvas.toDataURL("image/jpeg", 1.0);
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-      const ih = (canvas.height * pw) / canvas.width;
-      let y = 0;
-      while (y < ih) { if (y > 0) pdf.addPage(); pdf.addImage(img, "JPEG", 0, -y, pw, ih); y += ph; }
-      pdf.save(language === "bn" ? "মানসিক_মূল্যায়ন.pdf" : "psychological_assessment_report.pdf");
-    } catch (e) { alert("PDF export failed. Use browser print instead.") }
-    finally { setIsExporting(false) }
-  };
+ // Replace the handlePDF function with:
+const handlePDF = async () => {
+  if (!reportRef.current) return;
+  setIsExporting(true);
+  try {
+    // 1. Wait for fonts
+    await document.fonts.ready;
+    
+    // 2. Get real dimensions
+    const element = reportRef.current;
+    const width = element.scrollWidth;
+    const height = element.scrollHeight;
+    
+    // 3. Use html2canvas-pro (install: npm install html2canvas-pro)
+    const h2c = (await import("html2canvas-pro")).default;
+    const jsPDF = (await import("jspdf")).default;
+    
+    const canvas = await h2c(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#f4ecdb",
+      logging: false,
+      width: width,
+      height: height,
+      windowWidth: width,
+      windowHeight: height,
+    });
+    
+    const img = canvas.toDataURL("image/jpeg", 1.0);
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pw = pdf.internal.pageSize.getWidth();
+    const ph = pdf.internal.pageSize.getHeight();
+    const ih = (canvas.height * pw) / canvas.width;
+    let y = 0;
+    while (y < ih) {
+      if (y > 0) pdf.addPage();
+      pdf.addImage(img, "JPEG", 0, -y, pw, ih);
+      y += ph;
+    }
+    pdf.save(language === "bn" ? "মানসিক_মূল্যায়ন.pdf" : "psychological_assessment_report.pdf");
+  } catch (e) {
+    console.error("PDF export error:", e);
+    alert("PDF export failed. Use browser print instead.");
+  }
+  finally { setIsExporting(false) }
+};
 
   const l = language;
 
