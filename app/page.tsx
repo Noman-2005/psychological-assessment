@@ -717,31 +717,31 @@ export default function Home() {
     const isSelected = answers[currentQuestion.id] === idx; // ← Store INDEX, not score
     return (
       <button
-        key={idx}
-        onClick={() => {
-          if (isSelected) {
-            const newAnswers = { ...answers };
-            delete newAnswers[currentQuestion.id];
-            setAnswers(newAnswers);
-          } else {
-            setAnswers({ ...answers, [currentQuestion.id]: idx }); // ← Store INDEX
-          }
-        }}
-        className={`w-full text-left p-4 rounded-sm transition-all duration-200 flex items-start gap-4 border ${
-          isSelected ? "bg-[#1c2538] border-[#c4a45c]" : "bg-[#f9f2e3] border-[#c4a45c]/30 hover:border-[#c4a45c] hover:bg-[#f4ecdb]"
-        }`}
-      >
-        <span className={`cf-mono flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] border ${
-          isSelected ? "border-[#c4a45c] text-[#c4a45c]" : "border-[#8a6d3b]/40 text-[#8a6d3b]"
-        }`}>
-          {String.fromCharCode(65 + idx)}
-        </span>
-        <span className={`text-sm md:text-base leading-relaxed pt-0.5 ${
-          isSelected ? "text-[#e9d9ad]" : "text-[#1c2538]"
-        }`}>
-          {opt.text[l]}
-        </span>
-      </button>
+  key={idx}
+  onClick={() => {
+    if (isSelected) {
+      const newAnswers = { ...answers };
+      delete newAnswers[currentQuestion.id];
+      setAnswers(newAnswers);
+    } else {
+      setAnswers({ ...answers, [currentQuestion.id]: idx });
+    }
+  }}
+  className={`w-full text-left p-4 rounded-sm transition-all duration-200 flex items-start gap-4 ${
+    isSelected ? "bg-[#1c2538] border border-[#c4a45c]" : "bg-[#f9f2e3] border border-transparent hover:border-[#c4a45c] hover:bg-[#f4ecdb]"
+  }`}
+>
+  <span className={`cf-mono flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] border ${
+    isSelected ? "border-[#c4a45c] text-[#c4a45c]" : "border-[#8a6d3b]/40 text-[#8a6d3b]"
+  }`}>
+    {String.fromCharCode(65 + idx)}
+  </span>
+  <span className={`text-sm md:text-base leading-relaxed pt-0.5 ${
+    isSelected ? "text-white" : "text-[#1c2538]"
+  }`}>
+    {opt.text[l]}
+  </span>
+</button>
     );
   })}
 </div>

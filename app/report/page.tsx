@@ -93,49 +93,47 @@ export default function ReportPage() {
     try { return new Date(ts).toLocaleDateString(language === "bn" ? "bn-BD" : "en-GB", { day: "2-digit", month: "long", year: "numeric" }) } catch { return ts }
   };
 
- // Replace the handlePDF function with:
-const handlePDF = async () => {
+ const handlePDF = async () => {
   if (!reportRef.current) return;
   setIsExporting(true);
   try {
-    // 1. Wait for fonts
-    await document.fonts.ready;
-    
-    // 2. Get real dimensions
-    const element = reportRef.current;
-    const width = element.scrollWidth;
-    const height = element.scrollHeight;
-    
-    // 3. Use html2canvas-pro (install: npm install html2canvas-pro)
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
     const h2c = (await import("html2canvas-pro")).default;
     const jsPDF = (await import("jspdf")).default;
-    
-    const canvas = await h2c(element, {
+
+    const el = reportRef.current;
+    const canvas = await h2c(el, {
       scale: 2,
       useCORS: true,
       backgroundColor: "#f4ecdb",
       logging: false,
-      width: width,
-      height: height,
-      windowWidth: width,
-      windowHeight: height,
+      width: el.scrollWidth,
+      height: el.scrollHeight,
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight,
     });
-    
+
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error("Captured canvas was empty (0x0).");
+    }
+
     const img = canvas.toDataURL("image/jpeg", 1.0);
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pw = pdf.internal.pageSize.getWidth();
-    const ph = pdf.internal.pageSize.getHeight();
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
     const ih = (canvas.height * pw) / canvas.width;
     let y = 0;
-    while (y < ih) {
-      if (y > 0) pdf.addPage();
-      pdf.addImage(img, "JPEG", 0, -y, pw, ih);
-      y += ph;
-    }
+    while (y < ih) { if (y > 0) pdf.addPage(); pdf.addImage(img, "JPEG", 0, -y, pw, ih); y += ph; }
     pdf.save(language === "bn" ? "মানসিক_মূল্যায়ন.pdf" : "psychological_assessment_report.pdf");
   } catch (e) {
-    console.error("PDF export error:", e);
-    alert("PDF export failed. Use browser print instead.");
+    console.error("PDF export failed:", e);
+    alert(
+      language === "bn"
+        ? "PDF এক্সপোর্ট ব্যর্থ হয়েছে। ব্রাউজারের প্রিন্ট (Ctrl/Cmd+P) ব্যবহার করে 'Save as PDF' করুন।"
+        : "PDF export failed. Please use your browser's Print (Ctrl/Cmd+P) and choose 'Save as PDF' instead."
+    );
   }
   finally { setIsExporting(false) }
 };
