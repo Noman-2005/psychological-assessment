@@ -67,7 +67,15 @@ const FontStyles = () => (
     .brass-rule { background: linear-gradient(90deg,transparent,#c4a45c 25%,#c4a45c 75%,transparent); height: 1px; }
     .cf-fade { animation: cfFade .5s ease both; }
     @keyframes cfFade { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
-    @media print{body{background:#f4ecdb!important}.no-print{display:none!important}.cf-ink{background:#f4ecdb!important}}
+    
+    @media print {
+      body { background: #f4ecdb !important; }
+      .no-print { display: none !important; }
+      .cf-ink { background: #f4ecdb !important; }
+      .cf-paper { box-shadow: none !important; border: none !important; }
+      section, .border { page-break-inside: avoid; break-inside: avoid; }
+      @page { margin: 12mm; }
+    }
   `}</style>
 );
 
@@ -75,7 +83,6 @@ export default function ReportPage() {
   const router = useRouter();
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [language, setLanguage] = useState<Language>("en");
-  const [isExporting, setIsExporting] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,50 +100,9 @@ export default function ReportPage() {
     try { return new Date(ts).toLocaleDateString(language === "bn" ? "bn-BD" : "en-GB", { day: "2-digit", month: "long", year: "numeric" }) } catch { return ts }
   };
 
- const handlePDF = async () => {
-  if (!reportRef.current) return;
-  setIsExporting(true);
-  try {
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
-    }
-
-    const h2c = (await import("html2canvas-pro")).default;
-    const jsPDF = (await import("jspdf")).default;
-
-    const el = reportRef.current;
-    const canvas = await h2c(el, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#f4ecdb",
-      logging: false,
-      width: el.scrollWidth,
-      height: el.scrollHeight,
-      windowWidth: el.scrollWidth,
-      windowHeight: el.scrollHeight,
-    });
-
-    if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error("Captured canvas was empty (0x0).");
-    }
-
-    const img = canvas.toDataURL("image/jpeg", 1.0);
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-    const ih = (canvas.height * pw) / canvas.width;
-    let y = 0;
-    while (y < ih) { if (y > 0) pdf.addPage(); pdf.addImage(img, "JPEG", 0, -y, pw, ih); y += ph; }
-    pdf.save(language === "bn" ? "মানসিক_মূল্যায়ন.pdf" : "psychological_assessment_report.pdf");
-  } catch (e) {
-    console.error("PDF export failed:", e);
-    alert(
-      language === "bn"
-        ? "PDF এক্সপোর্ট ব্যর্থ হয়েছে। ব্রাউজারের প্রিন্ট (Ctrl/Cmd+P) ব্যবহার করে 'Save as PDF' করুন।"
-        : "PDF export failed. Please use your browser's Print (Ctrl/Cmd+P) and choose 'Save as PDF' instead."
-    );
-  }
-  finally { setIsExporting(false) }
-};
+  const handlePDF = () => {
+    window.print();
+  };
 
   const l = language;
 
@@ -145,7 +111,7 @@ export default function ReportPage() {
       <main className="cf-root min-h-screen flex items-center justify-center cf-ink">
         <FontStyles />
         <div className="text-center p-8">
-          <p className="cf-mono text-xs text-[#c4a45c] uppercase tracking-[0.2em] mb-6">{l === "en" ? "No case file found." : "কোনো কেস ফাইল পাওয়া যায়নি।"}</p>
+          <p className="cf-mono text-xs text-[#c4a45c] uppercase tracking-[0.2em] mb-6">{l === "en" ? "No case file found." : "কোনো কেস ফাইল পাওয়া যায়নি。"}</p>
           <button onClick={() => router.push("/")} className="cf-mono text-xs uppercase tracking-wider px-6 py-2.5 rounded-sm border border-[#c4a45c]/60 text-[#e9d9ad] hover:bg-[#c4a45c]/10 transition-all">← {l === "en" ? "Return to Assessment" : "মূল্যায়নে ফিরুন"}</button>
         </div>
       </main>
@@ -157,14 +123,17 @@ export default function ReportPage() {
   return (
     <main className="cf-root min-h-screen cf-ink py-8 px-4">
       <FontStyles />
+      
+      {/* Action Bar - Hidden when printing */}
       <div className="no-print max-w-4xl mx-auto flex items-center justify-between mb-6 px-1">
         <button onClick={() => router.push("/")} className="cf-mono text-[11px] uppercase tracking-wider text-[#8a93a8] hover:text-[#c4a45c] transition-colors">← {l === "en" ? "Back" : "পেছনে"}</button>
         <div className="flex items-center gap-3">
           <button onClick={() => setLanguage(p => p === "en" ? "bn" : "en")} className="cf-mono text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-sm border border-[#c4a45c]/40 text-[#c4a45c] hover:bg-[#c4a45c]/10 transition-all">{l === "en" ? "বাংলা" : "English"}</button>
-          <button onClick={handlePDF} disabled={isExporting} className="cf-mono text-[10px] uppercase tracking-wider px-5 py-1.5 rounded-sm bg-[#c4a45c] hover:bg-[#d4b46c] text-[#0e1a2b] transition-all disabled:opacity-50">{isExporting ? (l === "en" ? "Exporting…" : "এক্সপোর্ট…") : (l === "en" ? "Export PDF" : "PDF সংরক্ষণ")}</button>
+          <button onClick={handlePDF} className="cf-mono text-[10px] uppercase tracking-wider px-5 py-1.5 rounded-sm bg-[#c4a45c] hover:bg-[#d4b46c] text-[#0e1a2b] transition-all">{l === "en" ? "Save as PDF" : "PDF হিসেবে সংরক্ষণ"}</button>
         </div>
       </div>
 
+      {/* Report Content */}
       <div ref={reportRef} className="cf-paper max-w-4xl mx-auto rounded-sm border border-[#c4a45c]/40 shadow-[0_40px_100px_rgba(0,0,0,0.6)] cf-fade overflow-hidden">
         {/* Cover */}
         <div className="bg-[#1c2538] px-8 md:px-14 py-10 md:py-14 relative overflow-hidden">
@@ -187,7 +156,7 @@ export default function ReportPage() {
 
         {/* Disclaimer */}
         <div className="px-8 md:px-14 py-4 bg-[#f9f2e3] border-b border-[#c4a45c]/30">
-          <p className="cf-mono text-[10px] text-[#8a6d3b] leading-relaxed">⚠ {l === "en" ? "This document is a self-report screening instrument only. Not a clinical diagnosis. Never make treatment decisions based solely on this report." : "এই নথিটি শুধুমাত্র স্ব-প্রতিবেদন স্ক্রীনিং যন্ত্র। ক্লিনিকাল ডায়াগনোসিস নয়。"}</p>
+          <p className="cf-mono text-[10px] text-[#8a6d3b] leading-relaxed">⚠ {l === "en" ? "This document is a self-report screening instrument only. Not a clinical diagnosis. Never make treatment decisions based solely on this report." : "এই নথিটি শুধুমাত্র স্ব-প্রতিবেদন স্ক্রীনিং যন্ত্র। ক্লিনিকাল ডায়াগনোসিস নয়।"}</p>
         </div>
 
         <div className="px-6 md:px-14 py-8 md:py-12 space-y-10">
@@ -216,12 +185,11 @@ export default function ReportPage() {
             </section>
           )}
 
-          {/* Findings - FULL CONTENT NOW SHOWING */}
+          {/* Findings */}
           {result.findings && result.findings.length > 0 && (
             <section>
               <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-6 border-b border-[#c4a45c]/30 pb-3">{l === "en" ? "Identified Symptom Domains" : "শনাক্তকৃত লক্ষণ ডোমেন"}</h2>
               
-              {/* Overview Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                 {result.findings.map((f, i) => {
                   const c = sevHex(f.severity), p = sevPct(f.severity);
@@ -239,7 +207,6 @@ export default function ReportPage() {
                 })}
               </div>
 
-              {/* Detailed Cards */}
               <div className="space-y-6">
                 {result.findings.map((f, i) => {
                   const c = sevHex(f.severity), p = sevPct(f.severity);
@@ -272,13 +239,11 @@ export default function ReportPage() {
                       
                       <div className="h-px bg-[#c4a45c]/30 mb-4" />
                       
-                      {/* SCIENTIFIC EXPLANATION - NOW SHOWING */}
                       <div className="mb-4">
                         <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Scientific Explanation" : "বৈজ্ঞানিক ব্যাখ্যা"}</p>
                         <p className="text-sm text-[#3d3525] leading-relaxed">{f.description || "No description available."}</p>
                       </div>
                       
-                      {/* KEY INDICATORS - NOW SHOWING */}
                       {f.indications && f.indications.length > 0 && (
                         <div className="mb-4">
                           <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Key Indicators" : "প্রধান সূচক"}</p>
@@ -288,13 +253,11 @@ export default function ReportPage() {
                         </div>
                       )}
                       
-                      {/* RECOMMENDATION - NOW SHOWING */}
                       <div className="bg-[#1c2538]/5 border-l-2 border-[#c4a45c] p-3 mb-4 rounded-sm">
                         <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1">{l === "en" ? "Recommendation" : "সুপারিশ"}</p>
                         <p className="text-sm text-[#1c2538] leading-relaxed">{f.recommendation || "Consult a mental health professional for personalized guidance."}</p>
                       </div>
                       
-                      {/* EXERCISES */}
                       {f.exercises && f.exercises.length > 0 && (
                         <div>
                           <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-3">{l === "en" ? "Therapeutic Exercises" : "থেরাপিউটিক ব্যায়াম"}</p>
@@ -366,15 +329,16 @@ export default function ReportPage() {
                 <p className="text-sm font-medium text-[#1c2538]">{l === "en" ? "Psychological Self-Assessment Tool" : "মনস্তাত্ত্বিক স্ব-মূল্যায়ন যন্ত্র"}</p>
                 <p className="cf-mono text-[10px] text-[#8a6d3b] mt-1">{fmtDate(result.timestamp)}</p>
               </div>
-              <p className="cf-mono text-[10px] text-[#8a6d3b] max-w-xs text-right leading-relaxed">{l === "en" ? "Not a substitute for professional clinical evaluation." : "পেশাদার ক্লিনিকাল মূল্যায়নের বিকল্প নয়。"}</p>
+              <p className="cf-mono text-[10px] text-[#8a6d3b] max-w-xs text-right leading-relaxed">{l === "en" ? "Not a substitute for professional clinical evaluation." : "পেশাদার ক্লিনিকাল মূল্যায়নের বিকল্প নয়।"}</p>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Bottom Nav - Hidden when printing */}
       <div className="no-print max-w-4xl mx-auto mt-6 flex flex-col md:flex-row gap-3 px-1">
         <button onClick={() => router.push("/")} className="flex-1 cf-mono text-[11px] uppercase tracking-wider py-3 rounded-sm border border-[#c4a45c]/30 text-[#8a93a8] hover:text-[#e9d9ad] hover:border-[#c4a45c]/60 transition-all">← {l === "en" ? "Back to Assessment" : "মূল্যায়নে ফিরুন"}</button>
-        <button onClick={handlePDF} disabled={isExporting} className="flex-1 cf-mono text-[11px] uppercase tracking-wider py-3 rounded-sm bg-[#c4a45c] hover:bg-[#d4b46c] text-[#0e1a2b] font-semibold transition-all disabled:opacity-50">{isExporting ? (l === "en" ? "Exporting…" : "এক্সপোর্ট…") : (l === "en" ? "↓ Export as PDF" : "↓ PDF সংরক্ষণ")}</button>
+        <button onClick={handlePDF} className="flex-1 cf-mono text-[11px] uppercase tracking-wider py-3 rounded-sm bg-[#c4a45c] hover:bg-[#d4b46c] text-[#0e1a2b] font-semibold transition-all">{l === "en" ? "Save as PDF" : "PDF হিসেবে সংরক্ষণ"}</button>
       </div>
     </main>
   );
