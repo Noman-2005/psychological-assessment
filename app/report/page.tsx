@@ -52,9 +52,9 @@ const CRISIS = {
 
 const FontStyles = () => (
   <style jsx global>{`
-    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Noto+Serif+Bengali:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
     .cf-root { font-family: 'Fraunces', 'Noto Serif Bengali', Georgia, serif; }
-    .cf-mono { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.07em; }
+    .cf-mono { font-family: 'Inter', 'IBM Plex Mono', monospace; letter-spacing: 0.05em; }
     .cf-paper {
       background-color: #f4ecdb;
       background-image: radial-gradient(rgba(60,46,23,.05) 1px,transparent 1px),linear-gradient(180deg,#f7f0e1 0%,#f0e6d2 100%);
@@ -99,8 +99,15 @@ export default function ReportPage() {
     try {
       const h2c = (await import("html2canvas")).default;
       const jsPDF = (await import("jspdf")).default;
-      const canvas = await h2c(reportRef.current, { scale: 2, useCORS: true, backgroundColor: "#f4ecdb", logging: false });
-      const img = canvas.toDataURL("image/jpeg", .95);
+      const canvas = await h2c(reportRef.current, { 
+        scale: 3, 
+        useCORS: true, 
+        backgroundColor: "#f4ecdb", 
+        logging: false,
+        width: 1200,
+        height: 1600
+      });
+      const img = canvas.toDataURL("image/jpeg", 1.0);
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
       const ih = (canvas.height * pw) / canvas.width;
@@ -145,7 +152,7 @@ export default function ReportPage() {
           <div className="absolute right-8 bottom-4 w-24 h-24 rounded-full opacity-[0.06] border-[12px] border-[#c4a45c]" />
           <div className="flex items-center gap-3 mb-8"><div className="h-px flex-1 bg-[#c4a45c]/30" /><span className="cf-mono text-[10px] uppercase tracking-[0.3em] text-[#c4a45c]/70">{l === "en" ? "Confidential" : "গোপনীয়"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
           <p className="cf-mono text-[11px] uppercase tracking-[0.25em] text-[#c4a45c] mb-3">{l === "en" ? "Psychological Assessment Report" : "মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন"}</p>
-          <h1 className="text-3xl md:text-5xl font-medium text-[#e9d9ad] mb-6 tracking-tight leading-tight">{l === "en" ? "Clinical Findings" : "ক্লিনিকাল ফলাফল"}</h1>
+          <h1 className="text-3xl md:text-5xl font-medium text-[#e9d9ad] mb-6 tracking-tight leading-tight">{l === "en" ? "Screening Summary" : "প্রাথমিক মূল্যায়নের সারসংক্ষেপ"}</h1>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
             {[
               { label: l === "en" ? "Date" : "তারিখ", value: fmtDate(result.timestamp) },
@@ -158,6 +165,7 @@ export default function ReportPage() {
           </div>
         </div>
 
+        {/* Disclaimer */}
         <div className="px-8 md:px-14 py-4 bg-[#f9f2e3] border-b border-[#c4a45c]/30">
           <p className="cf-mono text-[10px] text-[#8a6d3b] leading-relaxed">⚠ {l === "en" ? "This document is a self-report screening instrument only. Not a clinical diagnosis. Never make treatment decisions based solely on this report." : "এই নথিটি শুধুমাত্র স্ব-প্রতিবেদন স্ক্রীনিং যন্ত্র। ক্লিনিকাল ডায়াগনোসিস নয়।"}</p>
         </div>
@@ -165,8 +173,7 @@ export default function ReportPage() {
         <div className="px-6 md:px-14 py-8 md:py-12 space-y-10">
           {/* Summary */}
           <section>
-            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Summary" : "সারাংশ"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
-            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-4">{l === "en" ? "Summary" : "সারাংশ"}</h2>
+            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-4 border-b border-[#c4a45c]/30 pb-3">{l === "en" ? "Summary" : "সারাংশ"}</h2>
             <div className="border-l-2 border-[#c4a45c] pl-4 py-1"><p className="text-[#3d3525] leading-relaxed">{result.summary[l]}</p></div>
             <div className="mt-6 inline-flex items-center gap-3 border rounded-sm px-4 py-2.5" style={{ borderColor: `${rc}50` }}>
               <span className="cf-mono text-[10px] uppercase tracking-wider text-[#8a6d3b]">{l === "en" ? "Overall Risk" : "সামগ্রিক ঝুঁকি"}</span>
@@ -188,8 +195,7 @@ export default function ReportPage() {
           {/* Findings */}
           {result.findings && result.findings.length > 0 && (
             <section>
-              <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Identified Domains" : "শনাক্তকৃত ডোমেন"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
-              <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-6">{l === "en" ? "Identified Symptom Domains" : "শনাক্তকৃত লক্ষণ ডোমেন"}</h2>
+              <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-6 border-b border-[#c4a45c]/30 pb-3">{l === "en" ? "Identified Symptom Domains" : "শনাক্তকৃত লক্ষণ ডোমেন"}</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                 {result.findings.map((f, i) => {
@@ -282,8 +288,7 @@ export default function ReportPage() {
 
           {/* Crisis Resources */}
           <section>
-            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Crisis Resources" : "সংকট সম্পদ"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
-            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-2">{l === "en" ? "Crisis Resources" : "সংকট সম্পদ"}</h2>
+            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-2 border-b border-[#c4a45c]/30 pb-3">{l === "en" ? "Crisis Resources" : "সংকট সম্পদ"}</h2>
             <p className="text-sm text-[#5a4a2f] mb-5">{l === "en" ? "If you are experiencing a crisis or feel unsafe, please reach out immediately." : "যদি আপনি কোনো সংকটে থাকেন, অনুগ্রহ করে এখনই যোগাযোগ করুন।"}</p>
             <div className="space-y-3">
               {CRISIS[l].map((r, i) => (
@@ -297,8 +302,7 @@ export default function ReportPage() {
 
           {/* Wellness Guidelines */}
           <section>
-            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Wellness Guidelines" : "সুস্থতার নির্দেশিকা"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
-            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-5">{l === "en" ? "General Wellness Guidelines" : "সাধারণ সুস্থতার নির্দেশিকা"}</h2>
+            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-5 border-b border-[#c4a45c]/30 pb-3">{l === "en" ? "General Wellness Guidelines" : "সাধারণ সুস্থতার নির্দেশিকা"}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(l === "en" ? [
                 { t: "Regular Sleep", d: "Aim for 7–9 hours nightly. Poor sleep worsens all mental health symptoms." },
