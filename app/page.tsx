@@ -715,10 +715,22 @@ export default function Home() {
             {currentQuestion?.options.map((opt, idx) => {
               const sel = answers[currentQuestion.id] === opt.score;
               return (
-                <button key={idx} onClick={() => {
-                  if (sel) { setAnswers(p => { const n = { ...p }; delete n[currentQuestion.id]; return n; }); }
-                  else { setAnswers(p => ({ ...p, [currentQuestion.id]: opt.score })); }
-                }} className={`w-full text-left p-4 rounded-sm transition-all duration-200 flex items-start gap-4 border ${sel ? "bg-[#1c2538] border-[#c4a45c]" : "bg-[#f9f2e3] border-[#c4a45c]/30 hover:border-[#c4a45c] hover:bg-[#f4ecdb]"}`}>
+                <button 
+  key={idx} 
+  onClick={() => {
+    // Toggle selection - only this option
+    if (sel) {
+      // If already selected, deselect it
+      const newAnswers = { ...answers };
+      delete newAnswers[currentQuestion.id];
+      setAnswers(newAnswers);
+    } else {
+      // Select this option and deselect all others
+      setAnswers({ ...answers, [currentQuestion.id]: opt.score });
+    }
+  }} 
+  className={`w-full text-left p-4 rounded-sm transition-all duration-200 flex items-start gap-4 border ${sel ? "bg-[#1c2538] border-[#c4a45c]" : "bg-[#f9f2e3] border-[#c4a45c]/30 hover:border-[#c4a45c] hover:bg-[#f4ecdb]"}`}
+>
                   <span className={`cf-mono flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] border ${sel ? "border-[#c4a45c] text-[#c4a45c]" : "border-[#8a6d3b]/40 text-[#8a6d3b]"}`}>{letters[idx] ?? idx + 1}</span>
                   <span className={`text-sm md:text-base leading-relaxed pt-0.5 ${sel ? "text-[#e9d9ad]" : "text-[#1c2538]"}`}>{opt.text[l]}</span>
                 </button>

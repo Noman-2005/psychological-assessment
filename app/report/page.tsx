@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-// ==================== TYPES ====================
 interface Exercise {
   id: string;
   title: { en: string; bn: string };
@@ -11,7 +10,6 @@ interface Exercise {
   steps?: { en: string[]; bn: string[] };
   category: string;
 }
-
 interface Finding {
   condition: string;
   severity: "Low" | "Mild" | "Moderate" | "High";
@@ -20,516 +18,375 @@ interface Finding {
   description: string;
   recommendation: string;
   exercises: Exercise[];
+  indications: string[];
 }
-
 interface AssessmentResult {
   findings: Finding[];
+  symptomMap: { [key: string]: number };
   totalQuestions: number;
   answeredQuestions: number;
+  completionTime: string;
+  timestamp: string;
   riskLevel: "Low" | "Mild" | "Moderate" | "High";
   criticalFindings: string[];
   summary: { en: string; bn: string };
-  timestamp: string;
 }
+type Language = "en" | "bn";
 
-// ==================== SCIENTIFIC EXPLANATIONS ====================
-const scientificExplanations: Record<string, string> = {
-  "Depression-related symptoms": "Depression occurs when brain chemicals called neurotransmitters (serotonin, dopamine, and norepinephrine) become imbalanced. This affects mood regulation, sleep patterns, appetite, and motivation. Genetic factors, life events, and brain structure changes can all contribute to this condition.",
-  
-  "Anxiety-related symptoms": "Anxiety is caused by overactivation of the amygdala, the brain's fear center, and an imbalance in stress hormones (cortisol and adrenaline). This triggers the body's 'fight or flight' response even when no real threat exists, leading to excessive worry, physical tension, and restlessness.",
-  
-  "OCD-related symptoms": "OCD involves hyperactivity in the brain's orbital frontal cortex and basal ganglia, which are responsible for decision-making and error detection. This creates a 'brain lock' where intrusive thoughts (obsessions) get stuck and compulsions develop as an attempt to neutralize the anxiety.",
-  
-  "PTSD-related symptoms": "PTSD occurs when the brain's fear response system becomes stuck in an overactive state after a traumatic event. The amygdala remains hypervigilant while the hippocampus struggles to properly process and store the memory, causing flashbacks, nightmares, and avoidance behaviors.",
-  
-  "Psychosis-related symptoms": "Psychosis involves disruptions in brain dopamine signaling pathways. This affects how the brain processes information, leading to unusual perceptions (hallucinations) and beliefs (delusions). The brain struggles to distinguish between internal thoughts and external reality.",
-  
-  "Borderline Personality-related symptoms": "BPD involves hypersensitivity in the emotional regulation centers of the brain, particularly the amygdala and prefrontal cortex. This leads to intense emotional reactions, difficulty calming down, and impulsive behaviors in response to perceived abandonment or rejection.",
-  
-  "Narcissistic Personality-related symptoms": "Narcissistic traits involve a combination of genetic predisposition, childhood experiences, and brain differences in empathy centers. These lead to an inflated self-image as a defense mechanism against deep-seated insecurities and difficulty understanding others' perspectives.",
-  
-  "Eating Disorder-related symptoms": "Eating disorders involve disruptions in brain reward and appetite centers, combined with distorted body image processing. The brain's reward system becomes misaligned, making controlling food intake feel like a way to manage emotions and self-worth.",
-  
-  "Maladaptive Daydreaming": "Maladaptive daydreaming occurs when the brain's default mode network, responsible for daydreaming and mind-wandering, becomes overactive. This creates a dopamine cycle where fantasy becomes a primary source of reward, making it difficult to focus on real-life activities."
-};
+const sevPct = (s: string) => ({ High: 90, Moderate: 62, Mild: 38 }[s] ?? 15);
+const sevHex = (s: string) => ({ High: "#8b2e2e", Moderate: "#9a5d1f", Mild: "#8a6d3b" }[s] ?? "#3b6b4f");
+const sevLabel = { en: { High: "HIGH", Moderate: "MODERATE", Mild: "MILD", Low: "LOW" }, bn: { High: "উচ্চ", Moderate: "মধ্যম", Mild: "মৃদু", Low: "স্বল্প" } };
 
-// ==================== COMMON SYMPTOMS ====================
-const commonSymptoms: Record<string, string[]> = {
-  "Depression-related symptoms": [
-    "Persistent sadness, emptiness, or low mood",
-    "Loss of interest or pleasure in activities once enjoyed",
-    "Fatigue, low energy, or feeling slowed down"
+const CRISIS = {
+  en: [
+    { name: "Kaan Pete Roi (Emotional Support)", number: "09612-119911", hours: "Daily, 3 PM – 3 AM" },
+    { name: "National Emergency", number: "999", hours: "24/7" },
+    { name: "NIMH Psychiatry Helpline", number: "16789", hours: "Mon–Fri, 9 AM – 5 PM" },
   ],
-  "Anxiety-related symptoms": [
-    "Excessive worry about everyday situations",
-    "Restlessness or feeling on edge",
-    "Difficulty concentrating or mind going blank"
-  ],
-  "OCD-related symptoms": [
-    "Recurring, unwanted thoughts (obsessions)",
-    "Repeated actions or rituals (compulsions)",
-    "Intense anxiety if rituals are not performed"
-  ],
-  "PTSD-related symptoms": [
-    "Flashbacks or nightmares of traumatic events",
-    "Avoiding reminders of the trauma",
-    "Hypervigilance or being easily startled"
-  ],
-  "Psychosis-related symptoms": [
-    "Hearing voices or seeing things others don't",
-    "Unusual or unrealistic beliefs (delusions)",
-    "Disorganized speech or thinking"
-  ],
-  "Borderline Personality-related symptoms": [
-    "Intense, unstable relationships",
-    "Sudden mood swings and intense anger",
-    "Fear of abandonment and feelings of emptiness"
-  ],
-  "Narcissistic Personality-related symptoms": [
-    "Inflated sense of self-importance",
-    "Need for excessive admiration",
-    "Lack of empathy for others"
-  ],
-  "Eating Disorder-related symptoms": [
-    "Preoccupation with weight and body shape",
-    "Severe restriction of food intake",
-    "Binge eating followed by purging behaviors"
-  ],
-  "Maladaptive Daydreaming": [
-    "Spending hours lost in fantasy worlds",
-    "Difficulty stopping daydreams",
-    "Interferes with daily activities and responsibilities"
+  bn: [
+    { name: "কান পেতে রই (আবেগীয় সহায়তা)", number: "০৯৬১২-১১৯৯১১", hours: "প্রতিদিন, বিকেল ৩টা – রাত ৩টা" },
+    { name: "জাতীয় জরুরি সেবা", number: "৯৯৯", hours: "সার্বক্ষণিক" },
+    { name: "জাতীয় মানসিক স্বাস্থ্য হেল্পলাইন", number: "১৬৭৮৯", hours: "সোম–শুক্র, সকাল ৯টা – বিকেল ৫টা" },
   ]
 };
 
-// ==================== MAIN COMPONENT ====================
+const FontStyles = () => (
+  <style jsx global>{`
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Noto+Serif+Bengali:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+    .cf-root { font-family: 'Fraunces', 'Noto Serif Bengali', Georgia, serif; }
+    .cf-mono { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.07em; }
+    .cf-paper {
+      background-color: #f4ecdb;
+      background-image: radial-gradient(rgba(60,46,23,.05) 1px,transparent 1px),linear-gradient(180deg,#f7f0e1 0%,#f0e6d2 100%);
+      background-size: 3px 3px,100% 100%;
+    }
+    .cf-ink {
+      background-color: #0e1a2b;
+      background-image: radial-gradient(ellipse at top,rgba(196,164,92,.08),transparent 60%),linear-gradient(180deg,#0b1422 0%,#101d30 100%);
+    }
+    .brass-rule { background: linear-gradient(90deg,transparent,#c4a45c 25%,#c4a45c 75%,transparent); height: 1px; }
+    .cf-fade { animation: cfFade .5s ease both; }
+    @keyframes cfFade { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+    @media print{body{background:#f4ecdb!important}.no-print{display:none!important}.cf-ink{background:#f4ecdb!important}}
+  `}</style>
+);
+
 export default function ReportPage() {
   const router = useRouter();
   const [result, setResult] = useState<AssessmentResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [language, setLanguage] = useState<"en" | "bn">("en");
-  const printRef = useRef<HTMLDivElement>(null);
+  const [language, setLanguage] = useState<Language>("en");
+  const [isExporting, setIsExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
-  // ===== LOAD DATA FROM STORAGE =====
+  // ===== LOAD DATA WITH MULTIPLE FALLBACKS =====
   useEffect(() => {
     console.log("🔍 Loading report data...");
     
-    try {
-      let data = localStorage.getItem("reportData");
-      
-      if (!data) {
-        data = sessionStorage.getItem("reportData");
-      }
-      
-      if (data) {
-        const parsed = JSON.parse(data);
-        console.log("✅ Full data structure:", parsed);
-        console.log("✅ Findings count:", parsed.findings?.length || 0);
-        setResult(parsed);
-      } else {
-        console.log("❌ No data found");
-      }
-    } catch (error) {
-      console.error("❌ Error loading report data:", error);
+    // Try localStorage first
+    let data = localStorage.getItem("reportData");
+    console.log("📦 localStorage:", data ? "Found" : "Not found");
+    
+    // If not, try sessionStorage
+    if (!data) {
+      data = sessionStorage.getItem("reportData");
+      console.log("📦 sessionStorage:", data ? "Found" : "Not found");
     }
     
-    setLoading(false);
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        console.log("✅ Parsed data:", parsed);
+        console.log("✅ Findings count:", parsed.findings?.length || 0);
+        setResult(parsed);
+      } catch (e) {
+        console.error("❌ Error parsing data:", e);
+      }
+    } else {
+      console.log("❌ No data found in any storage");
+    }
   }, []);
 
-  // ===== GET SCIENTIFIC EXPLANATION =====
-  const getScientificExplanation = (condition: string): string => {
-    // Try exact match first
-    if (scientificExplanations[condition]) {
-      return scientificExplanations[condition];
-    }
-    // Try partial match
-    for (const [key, value] of Object.entries(scientificExplanations)) {
-      if (condition.includes(key.split(" ")[0]) || condition === key) {
-        return value;
-      }
-    }
-    return condition + " involves complex interactions between brain chemistry, neural pathways, and environmental factors. Professional evaluation can provide more detailed insights.";
+  const fmtDate = (ts: string) => {
+    try { return new Date(ts).toLocaleDateString(language === "bn" ? "bn-BD" : "en-GB", { day: "2-digit", month: "long", year: "numeric" }) } catch { return ts }
   };
 
-  // ===== GET COMMON SYMPTOMS =====
-  const getCommonSymptoms = (condition: string): string[] => {
-    if (commonSymptoms[condition]) {
-      return commonSymptoms[condition];
-    }
-    for (const [key, value] of Object.entries(commonSymptoms)) {
-      if (condition.includes(key.split(" ")[0]) || condition === key) {
-        return value;
-      }
-    }
-    return ["Varies based on individual experience", "Professional evaluation recommended"];
+  const handlePDF = async () => {
+    if (!reportRef.current) return;
+    setIsExporting(true);
+    try {
+      const h2c = (await import("html2canvas")).default;
+      const jsPDF = (await import("jspdf")).default;
+      const canvas = await h2c(reportRef.current, { scale: 2, useCORS: true, backgroundColor: "#f4ecdb", logging: false });
+      const img = canvas.toDataURL("image/jpeg", .95);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+      const ih = (canvas.height * pw) / canvas.width;
+      let y = 0;
+      while (y < ih) { if (y > 0) pdf.addPage(); pdf.addImage(img, "JPEG", 0, -y, pw, ih); y += ph; }
+      pdf.save(language === "bn" ? "মানসিক_মূল্যায়ন.pdf" : "psychological_assessment_report.pdf");
+    } catch (e) { alert("PDF export failed. Use browser print instead.") }
+    finally { setIsExporting(false) }
   };
 
-  // ===== PDF PRINT HANDLER =====
-  const handlePrint = () => {
-    if (!printRef.current) return;
-
-    const printContent = printRef.current.innerHTML;
-    const win = window.open("", "_blank");
-    if (!win) return;
-
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Psychological Assessment Report</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11.5pt; color: #1a1a1a; background: white; padding: 0; }
-          .page { max-width: 210mm; min-height: 297mm; margin: 0 auto; padding: 18mm 20mm 18mm 22mm; }
-          .report-title { text-align: center; font-family: 'Arial', sans-serif; font-size: 16pt; font-weight: 700; letter-spacing: 3px; color: #1a1a1a; text-transform: uppercase; border-bottom: 2px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 18px; }
-          .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1.5px solid #1a1a1a; margin-bottom: 22px; }
-          .meta-cell { padding: 6px 10px; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; }
-          .meta-cell:nth-child(3n) { border-right: none; }
-          .meta-label { font-family: 'Arial', sans-serif; font-size: 8.5pt; font-weight: 600; color: #1a1a1a; margin-bottom: 1px; }
-          .meta-value { font-size: 10.5pt; color: #222; }
-          h2 { font-family: 'Arial', sans-serif; font-size: 12pt; font-weight: 700; color: #1a1a1a; margin: 18px 0 7px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
-          h3 { font-family: 'Arial', sans-serif; font-size: 10.5pt; font-weight: 600; color: #1a1a1a; margin: 14px 0 5px; }
-          h4 { font-family: 'Arial', sans-serif; font-size: 9.5pt; font-weight: 600; color: #1a1a1a; margin: 10px 0 4px; }
-          p, li { font-size: 11pt; line-height: 1.65; color: #222; }
-          ul, ol { padding-left: 20px; margin: 4px 0; }
-          li { margin-bottom: 2px; }
-          .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 9pt; font-weight: 600; font-family: 'Arial', sans-serif; }
-          .badge-high { background: #ffebee; color: #cc0000; }
-          .badge-moderate { background: #fff3e0; color: #cc8800; }
-          .badge-mild { background: #e8f5e9; color: #2d7d2d; }
-          .badge-low { background: #e8f5e9; color: #2d7d2d; }
-          .finding-block { background: #fafafa; padding: 14px 16px; margin: 10px 0; border-left: 4px solid #1a1a1a; }
-          .finding-block.high { border-left-color: #cc0000; }
-          .finding-block.moderate { border-left-color: #cc8800; }
-          .finding-block.mild { border-left-color: #2d7d2d; }
-          .disclaimer { margin-top: 24px; padding: 12px 16px; background: #f8f8f8; border-left: 3px solid #cc0000; font-size: 9.5pt; color: #555; line-height: 1.6; }
-          .footer { text-align: center; font-family: 'Arial', sans-serif; font-size: 8pt; color: #999; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
-          .critical-alert { background: #ffebee; padding: 12px 16px; margin: 10px 0; border-left: 4px solid #cc0000; }
-          .critical-alert p { color: #cc0000; font-weight: 600; margin: 0; }
-        </style>
-      </head>
-      <body>
-        <div class="page">${printContent}</div>
-      </body>
-      </html>
-    `);
-    win.document.close();
-    win.focus();
-    setTimeout(() => {
-      win.print();
-    }, 600);
-  };
-
-  // ===== FORMAT DATE =====
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  };
-
-  // ===== BADGE CLASS =====
-  const getBadgeClass = (severity: string) => {
-    switch (severity) {
-      case "High": return "badge-high";
-      case "Moderate": return "badge-moderate";
-      case "Mild": return "badge-mild";
-      default: return "badge-low";
-    }
-  };
+  const l = language;
 
   // ===== LOADING STATE =====
-  if (loading) {
+  if (!result) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: "#8b0000" }}>Loading Report...</div>
-          <div style={{ marginTop: 8, color: "#666" }}>Please wait</div>
+      <main className="cf-root min-h-screen flex items-center justify-center cf-ink">
+        <FontStyles />
+        <div className="text-center p-8">
+          <div className="w-14 h-14 border-2 border-[#c4a45c]/30 border-t-[#c4a45c] rounded-full animate-spin mx-auto mb-5" />
+          <p className="cf-mono text-xs text-[#c4a45c] uppercase tracking-[0.2em]">{l === "en" ? "Loading case file..." : "কেস ফাইল লোড হচ্ছে..."}</p>
+          <button onClick={() => router.push("/")} className="cf-mono text-xs uppercase tracking-wider px-6 py-2.5 rounded-sm border border-[#c4a45c]/60 text-[#e9d9ad] hover:bg-[#c4a45c]/10 transition-all mt-4">
+            ← {l === "en" ? "Return to Assessment" : "মূল্যায়নে ফিরুন"}
+          </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   // ===== NO DATA STATE =====
-  if (!result || !result.findings || result.findings.length === 0) {
+  if (!result.findings || result.findings.length === 0) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f5f4f0" }}>
-        <div style={{ textAlign: "center", background: "white", padding: "40px", borderRadius: 8, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", maxWidth: 500 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
-          <h2 style={{ fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>No Report Data Found</h2>
-          <p style={{ color: "#666", marginBottom: 8 }}>Please complete the assessment first.</p>
-          <button
-            onClick={() => router.push("/")}
-            style={{ background: "#8b0000", color: "white", border: "none", padding: "10px 24px", borderRadius: 4, fontSize: 14, cursor: "pointer" }}
-          >
-            Go to Assessment
-          </button>
+      <main className="cf-root min-h-screen flex items-center justify-center cf-ink">
+        <FontStyles />
+        <div className="text-center p-8">
+          <p className="cf-mono text-xs text-[#c4a45c] uppercase tracking-[0.2em] mb-6">{l === "en" ? "No case file found." : "কোনো কেস ফাইল পাওয়া যায়নি।"}</p>
+          <button onClick={() => router.push("/")} className="cf-mono text-xs uppercase tracking-wider px-6 py-2.5 rounded-sm border border-[#c4a45c]/60 text-[#e9d9ad] hover:bg-[#c4a45c]/10 transition-all">← {l === "en" ? "Return to Assessment" : "মূল্যায়নে ফিরুন"}</button>
         </div>
-      </div>
+      </main>
     );
   }
 
-  // ===== TRANSLATIONS =====
-  const t = {
-    en: {
-      title: "Automated Confidential Psychological Assessment Report",
-      assessmentDate: "Assessment Date",
-      reportId: "Report ID",
-      riskLevel: "Risk Level",
-      questionsAnswered: "Questions Answered",
-      summary: "Summary",
-      scientificExplanation: "Scientific Explanation",
-      commonSymptoms: "Common Symptoms",
-      recommendations: "Recommendations",
-      disclaimer: "Disclaimer",
-      disclaimerText: "This is an automated screening report for informational purposes only. It does not constitute a medical diagnosis. Never make any medication decisions based solely on this assessment. If you are experiencing severe distress or suicidal thoughts, please contact emergency services or a mental health professional immediately.",
-      downloadPdf: "⬇ Download PDF",
-      backToAssessment: "← Back to Assessment"
-    },
-    bn: {
-      title: "স্বয়ংক্রিয় গোপনীয় মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন",
-      assessmentDate: "মূল্যায়নের তারিখ",
-      reportId: "প্রতিবেদন আইডি",
-      riskLevel: "ঝুঁকির মাত্রা",
-      questionsAnswered: "উত্তরপ্রাপ্ত প্রশ্ন",
-      summary: "সারাংশ",
-      scientificExplanation: "বৈজ্ঞানিক ব্যাখ্যা",
-      commonSymptoms: "সাধারণ লক্ষণ",
-      recommendations: "সুপারিশ",
-      disclaimer: "দাবিত্যাগ",
-      disclaimerText: "এটি একটি স্বয়ংক্রিয় স্ক্রীনিং প্রতিবেদন যা শুধুমাত্র তথ্যগত উদ্দেশ্যে। এটি কোনো চিকিৎসা নির্ণয় নয়। কখনোই এই মূল্যায়নের ভিত্তিতে কোনো ওষুধ সেবনের সিদ্ধান্ত নেবেন না। যদি আপনি তীব্র কষ্ট বা আত্মহত্যার চিন্তায় ভোগেন, তাহলে অবিলম্বে জরুরি পরিষেবা বা মানসিক স্বাস্থ্য পেশাদারের সাথে যোগাযোগ করুন।",
-      downloadPdf: "⬇ পিডিএফ ডাউনলোড করুন",
-      backToAssessment: "← মূল্যায়নে ফিরে যান"
-    }
-  };
+  const rc = sevHex(result.riskLevel);
 
-  const lang = t[language];
-
-  // ===== RENDER REPORT =====
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f4f0", fontFamily: "'Georgia', serif", padding: "20px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* Language Toggle */}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 16 }}>
-          <button
-            onClick={() => setLanguage("en")}
-            style={{
-              padding: "6px 16px",
-              border: language === "en" ? "2px solid #8b0000" : "1px solid #ccc",
-              borderRadius: 4,
-              background: language === "en" ? "#8b0000" : "white",
-              color: language === "en" ? "white" : "#333",
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600
-            }}
-          >
-            English
-          </button>
-          <button
-            onClick={() => setLanguage("bn")}
-            style={{
-              padding: "6px 16px",
-              border: language === "bn" ? "2px solid #8b0000" : "1px solid #ccc",
-              borderRadius: 4,
-              background: language === "bn" ? "#8b0000" : "white",
-              color: language === "bn" ? "white" : "#333",
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600
-            }}
-          >
-            বাংলা
-          </button>
-        </div>
-
-        {/* Back Button */}
-        <button
-          onClick={() => router.push("/")}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "#8b0000",
-            cursor: "pointer",
-            fontSize: 14,
-            marginBottom: 16,
-            padding: "8px 0",
-            display: "flex",
-            alignItems: "center",
-            gap: 4
-          }}
-        >
-          {lang.backToAssessment}
-        </button>
-
-        {/* ===== REPORT CONTENT ===== */}
-        <div style={{ background: "white", boxShadow: "0 4px 32px rgba(0,0,0,0.12)", padding: "40px 48px", borderRadius: 4 }} ref={printRef}>
-          
-          {/* Title */}
-          <div style={{ textAlign: "center", borderBottom: "2px solid #1a1a1a", paddingBottom: 12, marginBottom: 18 }}>
-            <h1 style={{ fontFamily: "'Arial', sans-serif", fontSize: 16, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", margin: 0 }}>
-              {lang.title}
-            </h1>
-          </div>
-
-          {/* Meta Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", border: "1.5px solid #1a1a1a", marginBottom: 22 }}>
-            <div style={{ padding: "6px 10px", borderRight: "1px solid #ccc", borderBottom: "1px solid #ccc" }}>
-              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.assessmentDate}</div>
-              <div style={{ fontSize: 10.5 }}>{formatDate(result.timestamp)}</div>
-            </div>
-            <div style={{ padding: "6px 10px", borderRight: "1px solid #ccc", borderBottom: "1px solid #ccc" }}>
-              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.reportId}</div>
-              <div style={{ fontSize: 10.5 }}>PA-{Date.now().toString().slice(-8)}</div>
-            </div>
-            <div style={{ padding: "6px 10px", borderBottom: "1px solid #ccc" }}>
-              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.riskLevel}</div>
-              <div style={{ fontSize: 10.5 }}>
-                <span className={getBadgeClass(result.riskLevel)} style={{ padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600, display: "inline-block" }}>
-                  {result.riskLevel}
-                </span>
-              </div>
-            </div>
-            <div style={{ padding: "6px 10px", borderRight: "1px solid #ccc" }}>
-              <div style={{ fontFamily: "'Arial', sans-serif", fontSize: 8.5, fontWeight: 600, marginBottom: 1 }}>{lang.questionsAnswered}</div>
-              <div style={{ fontSize: 10.5 }}>{result.answeredQuestions} / {result.totalQuestions}</div>
-            </div>
-          </div>
-
-          {/* ===== SUMMARY ===== */}
-          <h2>{lang.summary}</h2>
-          <p style={{ marginBottom: 16, fontSize: "11pt", lineHeight: 1.65 }}>{result.summary[language]}</p>
-
-          {/* ===== CRITICAL ALERTS ===== */}
-          {result.criticalFindings && result.criticalFindings.length > 0 && (
-            <div className="critical-alert" style={{ background: "#ffebee", padding: "12px 16px", margin: "10px 0", borderLeft: "4px solid #cc0000" }}>
-              <p style={{ fontWeight: 600, color: "#cc0000", margin: 0 }}>⚠️ {language === "en" ? "Critical Alerts" : "জরুরি সতর্কতা"}</p>
-              {result.criticalFindings.map((alert, i) => (
-                <p key={i} style={{ margin: "4px 0 0 0", fontSize: "10.5pt", color: "#cc0000" }}>{alert}</p>
-              ))}
-            </div>
-          )}
-
-          {/* ===== FINDINGS ===== */}
-          {result.findings && result.findings.length > 0 && (
-            <>
-              <h2 style={{ marginTop: 24 }}>{language === "en" ? "Identified Concerns" : "শনাক্তকৃত উদ্বেগ"}</h2>
-              
-              {result.findings.map((finding, index) => {
-                // GET CONDITION NAME - FIX FOR MISSING DATA
-                const conditionName = finding.condition || "Unknown Condition";
-                
-                // GET SEVERITY
-                const severity = finding.severity || "Low";
-                const severityColor = severity === "High" ? "#cc0000" : severity === "Moderate" ? "#cc8800" : "#2d7d2d";
-                
-                // GET EXPLANATION
-                const explanation = getScientificExplanation(conditionName);
-                
-                // GET SYMPTOMS
-                const symptoms = getCommonSymptoms(conditionName);
-                
-                // GET RECOMMENDATION
-                const recommendation = finding.recommendation || "Please consult a mental health professional for personalized guidance.";
-                
-                return (
-                  <div key={index} className={`finding-block ${severity.toLowerCase()}`} style={{ 
-                    background: "#fafafa", 
-                    padding: "14px 16px", 
-                    margin: "12px 0", 
-                    borderLeft: `4px solid ${severityColor}`,
-                    borderRadius: "0 4px 4px 0"
-                  }}>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "12pt", fontWeight: 700 }}>
-                      {index + 1}. {conditionName}
-                      <span className={getBadgeClass(severity)} style={{ marginLeft: 10, padding: "2px 10px", borderRadius: 12, fontSize: 9, fontWeight: 600, display: "inline-block" }}>
-                        {severity}
-                      </span>
-                    </h3>
-                    
-                    <p style={{ margin: "2px 0 6px 0", fontSize: "10pt", color: "#555" }}>
-                      <strong>{language === "en" ? "Score" : "স্কোর"}:</strong> {finding.score || 0}/{finding.maxScore || 0}
-                    </p>
-
-                    {/* Scientific Explanation */}
-                    <h4 style={{ fontFamily: "'Arial', sans-serif", fontSize: "9.5pt", fontWeight: 600, color: "#1a1a1a", margin: "10px 0 4px 0" }}>
-                      {lang.scientificExplanation}
-                    </h4>
-                    <p style={{ margin: "0 0 6px 0", fontSize: "10.5pt", lineHeight: 1.6 }}>{explanation}</p>
-
-                    {/* Common Symptoms */}
-                    <h4 style={{ fontFamily: "'Arial', sans-serif", fontSize: "9.5pt", fontWeight: 600, color: "#1a1a1a", margin: "8px 0 4px 0" }}>
-                      {lang.commonSymptoms}
-                    </h4>
-                    <ul style={{ margin: "0 0 6px 0", paddingLeft: 20, fontSize: "10.5pt", lineHeight: 1.6 }}>
-                      {symptoms.map((symptom, idx) => (
-                        <li key={idx}>{symptom}</li>
-                      ))}
-                    </ul>
-
-                    {/* Recommendations */}
-                    <h4 style={{ fontFamily: "'Arial', sans-serif", fontSize: "9.5pt", fontWeight: 600, color: "#1a1a1a", margin: "8px 0 4px 0" }}>
-                      {lang.recommendations}
-                    </h4>
-                    <p style={{ margin: "0 0 4px 0", fontSize: "10.5pt", lineHeight: 1.6 }}>{recommendation}</p>
-
-                    {/* Exercises */}
-                    {finding.exercises && finding.exercises.length > 0 && (
-                      <ul style={{ margin: "4px 0 0 0", paddingLeft: 20, fontSize: "10.5pt", lineHeight: 1.6 }}>
-                        {finding.exercises.map((ex, exIdx) => (
-                          <li key={exIdx}>
-                            <strong>{ex.title[language]}</strong> - {ex.description[language]}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </>
-          )}
-
-          {/* ===== DISCLAIMER ===== */}
-          <div className="disclaimer" style={{ marginTop: 24, padding: "12px 16px", background: "#f8f8f8", borderLeft: "3px solid #cc0000", fontSize: 9.5, color: "#555", lineHeight: 1.6 }}>
-            <strong>{lang.disclaimer}</strong>
-            <p style={{ margin: "4px 0 0 0", fontSize: "9.5pt" }}>{lang.disclaimerText}</p>
-          </div>
-
-          {/* ===== FOOTER ===== */}
-          <div className="footer" style={{ textAlign: "center", fontFamily: "'Arial', sans-serif", fontSize: 8, color: "#999", marginTop: 30, borderTop: "1px solid #eee", paddingTop: 10 }}>
-            Generated by Psychological Assessment System
-            <br />
-            Report ID: PA-{Date.now().toString().slice(-8)} | For Personal Use Only
-          </div>
-        </div>
-
-        {/* ===== DOWNLOAD BUTTON ===== */}
-        <div style={{ marginTop: 20, display: "flex", justifyContent: "center" }}>
-          <button
-            onClick={handlePrint}
-            style={{
-              background: "#8b0000",
-              color: "white",
-              border: "none",
-              padding: "12px 40px",
-              borderRadius: 4,
-              fontSize: 16,
-              fontWeight: 700,
-              cursor: "pointer",
-              letterSpacing: 1,
-              transition: "background 0.2s"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "#6b0000"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "#8b0000"}
-          >
-            {lang.downloadPdf}
-          </button>
+    <main className="cf-root min-h-screen cf-ink py-8 px-4">
+      <FontStyles />
+      {/* action bar */}
+      <div className="no-print max-w-4xl mx-auto flex items-center justify-between mb-6 px-1">
+        <button onClick={() => router.push("/")} className="cf-mono text-[11px] uppercase tracking-wider text-[#8a93a8] hover:text-[#c4a45c] transition-colors">← {l === "en" ? "Back" : "পেছনে"}</button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setLanguage(p => p === "en" ? "bn" : "en")} className="cf-mono text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-sm border border-[#c4a45c]/40 text-[#c4a45c] hover:bg-[#c4a45c]/10 transition-all">{l === "en" ? "বাংলা" : "English"}</button>
+          <button onClick={handlePDF} disabled={isExporting} className="cf-mono text-[10px] uppercase tracking-wider px-5 py-1.5 rounded-sm bg-[#c4a45c] hover:bg-[#d4b46c] text-[#0e1a2b] transition-all disabled:opacity-50">{isExporting ? (l === "en" ? "Exporting…" : "এক্সপোর্ট…") : (l === "en" ? "Export PDF" : "PDF সংরক্ষণ")}</button>
         </div>
       </div>
-    </div>
+
+      {/* report */}
+      <div ref={reportRef} className="cf-paper max-w-4xl mx-auto rounded-sm border border-[#c4a45c]/40 shadow-[0_40px_100px_rgba(0,0,0,0.6)] cf-fade overflow-hidden">
+        {/* cover */}
+        <div className="bg-[#1c2538] px-8 md:px-14 py-10 md:py-14 relative overflow-hidden">
+          <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full opacity-[0.04] border-[40px] border-[#c4a45c]" />
+          <div className="absolute right-8 bottom-4 w-24 h-24 rounded-full opacity-[0.06] border-[12px] border-[#c4a45c]" />
+          <div className="flex items-center gap-3 mb-8"><div className="h-px flex-1 bg-[#c4a45c]/30" /><span className="cf-mono text-[10px] uppercase tracking-[0.3em] text-[#c4a45c]/70">{l === "en" ? "Confidential" : "গোপনীয়"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+          <p className="cf-mono text-[11px] uppercase tracking-[0.25em] text-[#c4a45c] mb-3">{l === "en" ? "Psychological Case File — Assessment Report" : "মনস্তাত্ত্বিক কেস ফাইল — মূল্যায়ন প্রতিবেদন"}</p>
+          <h1 className="text-3xl md:text-5xl font-medium text-[#e9d9ad] mb-6 tracking-tight leading-tight">{l === "en" ? "Clinical\nFindings" : "ক্লিনিকাল\nফলাফল"}</h1>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            {[
+              { label: l === "en" ? "Date" : "তারিখ", value: fmtDate(result.timestamp) },
+              { label: l === "en" ? "Questions" : "প্রশ্ন", value: `${result.answeredQuestions}/${result.totalQuestions}` },
+              { label: l === "en" ? "Domains" : "ডোমেন", value: String(result.findings.length) },
+              { label: l === "en" ? "Risk Level" : "ঝুঁকি", value: sevLabel[l][result.riskLevel as keyof typeof sevLabel.en] ?? result.riskLevel }
+            ].map((item, i) => (
+              <div key={i}><p className="cf-mono text-[10px] text-[#c4a45c]/50 uppercase tracking-wider mb-1">{item.label}</p><p className="text-[#e9d9ad] text-sm font-medium">{item.value}</p></div>
+            ))}
+          </div>
+        </div>
+
+        {/* disclaimer */}
+        <div className="px-8 md:px-14 py-4 bg-[#f9f2e3] border-b border-[#c4a45c]/30">
+          <p className="cf-mono text-[10px] text-[#8a6d3b] leading-relaxed">⚠ {l === "en" ? "This document is a self-report screening instrument only. Not a clinical diagnosis. Never make treatment decisions based solely on this report." : "এই নথিটি শুধুমাত্র স্ব-প্রতিবেদন স্ক্রীনিং যন্ত্র। ক্লিনিকাল ডায়াগনোসিস নয়।"}</p>
+        </div>
+
+        <div className="px-6 md:px-14 py-8 md:py-12 space-y-10">
+          {/* summary */}
+          <section>
+            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section I" : "অনুচ্ছেদ ১"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-4">{l === "en" ? "Summary" : "সারাংশ"}</h2>
+            <div className="border-l-2 border-[#c4a45c] pl-4 py-1"><p className="text-[#3d3525] leading-relaxed">{result.summary[l]}</p></div>
+            <div className="mt-6 inline-flex items-center gap-3 border rounded-sm px-4 py-2.5" style={{ borderColor: `${rc}50` }}>
+              <span className="cf-mono text-[10px] uppercase tracking-wider text-[#8a6d3b]">{l === "en" ? "Overall Risk" : "সামগ্রিক ঝুঁকি"}</span>
+              <span className="h-4 w-px bg-[#c4a45c]/40" />
+              <span className="cf-mono text-xs font-semibold uppercase tracking-wider" style={{ color: rc }}>{sevLabel[l][result.riskLevel as keyof typeof sevLabel.en] ?? result.riskLevel}</span>
+            </div>
+          </section>
+
+          {/* critical */}
+          {result.criticalFindings && result.criticalFindings.length > 0 && (
+            <section>
+              <div className="border-2 border-[#8b2e2e]/60 bg-[#f6e3e0] rounded-sm p-5 md:p-6">
+                <h3 className="cf-mono text-[11px] uppercase tracking-[0.2em] text-[#8b2e2e] font-semibold mb-3">⚠ {l === "en" ? "Critical Alerts" : "জরুরি সতর্কতা"}</h3>
+                {result.criticalFindings.map((a, i) => <p key={i} className="text-sm text-[#7a2828] mb-1">{a}</p>)}
+              </div>
+            </section>
+          )}
+
+          {/* findings */}
+          {result.findings && result.findings.length > 0 && (
+            <section>
+              <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section II" : "অনুচ্ছেদ ২"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+              <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-6">{l === "en" ? "Identified Symptom Domains" : "শনাক্তকৃত লক্ষণ ডোমেন"}</h2>
+              {/* overview grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
+                {result.findings.map((f, i) => {
+                  const c = sevHex(f.severity), p = sevPct(f.severity);
+                  return (
+                    <div key={i} className="border border-[#c4a45c]/30 rounded-sm p-3 bg-[#f9f2e3]">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-[13px] font-medium text-[#1c2538] leading-tight">{f.condition || "Unknown"}</p>
+                        <span className="cf-mono text-[10px] flex-shrink-0 ml-2" style={{ color: c }}>{sevLabel[l][f.severity as keyof typeof sevLabel.en] ?? f.severity}</span>
+                      </div>
+                      <div className="h-1.5 bg-[#1c2538]/10 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${p}%`, backgroundColor: c }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* detailed cards */}
+              <div className="space-y-6">
+                {result.findings.map((f, i) => {
+                  const c = sevHex(f.severity), p = sevPct(f.severity);
+                  const sl = sevLabel[l][f.severity as keyof typeof sevLabel.en] ?? f.severity;
+                  return (
+                    <div key={i} className="border border-[#c4a45c]/40 rounded-sm p-5 md:p-7 bg-[#f9f2e3]">
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="cf-mono text-[11px] text-[#c4a45c] border border-[#c4a45c]/50 px-2 py-0.5 rounded-sm">{String(i + 1).padStart(2, "0")}</span>
+                          <h3 className="text-base md:text-lg font-medium text-[#1c2538]">{f.condition || "Unknown Condition"}</h3>
+                        </div>
+                        <span className="cf-mono text-[10px] px-2.5 py-1 rounded-sm border flex-shrink-0" style={{ color: c, borderColor: `${c}60`, backgroundColor: `${c}10` }}>{sl}</span>
+                      </div>
+                      {/* meter */}
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex-1">
+                          <div className="h-2 bg-[#1c2538]/10 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p}%`, backgroundColor: c }} />
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="cf-mono text-[10px] text-[#8a6d3b]">{l === "en" ? "Low" : "স্বল্প"}</span>
+                            <span className="cf-mono text-[10px] text-[#8a6d3b]">{l === "en" ? "High" : "উচ্চ"}</span>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="cf-mono text-[11px] font-semibold" style={{ color: c }}>{sl}</p>
+                          <p className="cf-mono text-[10px] text-[#8a6d3b]">{f.score}/{f.maxScore}</p>
+                        </div>
+                      </div>
+                      <div className="h-px bg-[#c4a45c]/30 mb-4" />
+                      {/* Description */}
+                      <div className="mb-4">
+                        <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Clinical Note" : "ক্লিনিকাল নোট"}</p>
+                        <p className="text-sm text-[#3d3525] leading-relaxed">{f.description || "No description available."}</p>
+                      </div>
+                      {/* Indications */}
+                      {f.indications && f.indications.length > 0 && (
+                        <div className="mb-4">
+                          <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Key Indicators" : "প্রধান সূচক"}</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                            {f.indications.map((ind, ii) => <div key={ii} className="flex gap-2 text-sm text-[#3d3525]"><span className="text-[#c4a45c] flex-shrink-0">—</span><span>{ind}</span></div>)}
+                          </div>
+                        </div>
+                      )}
+                      {/* Recommendation */}
+                      <div className="bg-[#1c2538]/5 border-l-2 border-[#c4a45c] p-3 mb-4 rounded-sm">
+                        <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1">{l === "en" ? "Recommendation" : "সুপারিশ"}</p>
+                        <p className="text-sm text-[#1c2538] leading-relaxed">{f.recommendation || "Consult a mental health professional for personalized guidance."}</p>
+                      </div>
+                      {/* Exercises */}
+                      {f.exercises && f.exercises.length > 0 && (
+                        <div>
+                          <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-3">{l === "en" ? "Therapeutic Exercises" : "থেরাপিউটিক ব্যায়াম"}</p>
+                          <div className="space-y-3">
+                            {f.exercises.map((ex, ei) => (
+                              <div key={ei} className="border border-[#c4a45c]/30 rounded-sm p-3 bg-[#f4ecdb]">
+                                <p className="text-sm font-medium text-[#1c2538] mb-1">{ex.title[l]}</p>
+                                <p className="text-xs text-[#5a4a2f] mb-2">{ex.description[l]}</p>
+                                {ex.steps && <ol className="space-y-1">{ex.steps[l].map((s, si) => <li key={si} className="text-xs text-[#3d3525] flex gap-2"><span className="cf-mono text-[#c4a45c] flex-shrink-0">{si + 1}.</span><span>{s}</span></li>)}</ol>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {(!result.findings || result.findings.length === 0) && (
+            <section>
+              <div className="border border-[#3b6b4f]/40 bg-[#e8efe6] rounded-sm p-6 text-center">
+                <p className="text-[#2d543d] text-base">{l === "en" ? "No significant psychological concerns were identified." : "কোনো উল্লেখযোগ্য মানসিক উদ্বেগ শনাক্ত হয়নি।"}</p>
+              </div>
+            </section>
+          )}
+
+          {/* crisis resources */}
+          <section>
+            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section III" : "অনুচ্ছেদ ৩"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-2">{l === "en" ? "Crisis Resources" : "সংকট সম্পদ"}</h2>
+            <p className="text-sm text-[#5a4a2f] mb-5">{l === "en" ? "If you are experiencing a crisis or feel unsafe, please reach out immediately." : "যদি আপনি কোনো সংকটে থাকেন, অনুগ্রহ করে এখনই যোগাযোগ করুন।"}</p>
+            <div className="space-y-3">
+              {CRISIS[l].map((r, i) => (
+                <div key={i} className="border border-[#c4a45c]/40 bg-[#f9f2e3] rounded-sm p-4 flex items-center justify-between gap-4">
+                  <div><p className="text-sm font-medium text-[#1c2538]">{r.name}</p><p className="cf-mono text-[10px] text-[#8a6d3b] mt-0.5">{r.hours}</p></div>
+                  <p className="cf-mono text-base md:text-lg font-semibold text-[#1c2538] flex-shrink-0 tracking-wider">{r.number}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* wellness */}
+          <section>
+            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section IV" : "অনুচ্ছেদ ৪"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+            <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-5">{l === "en" ? "General Wellness Guidelines" : "সাধারণ সুস্থতার নির্দেশিকা"}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(l === "en" ? [
+                { t: "Regular Sleep", d: "Aim for 7–9 hours nightly. Poor sleep worsens all mental health symptoms." },
+                { t: "Physical Movement", d: "Even a 20-minute daily walk significantly boosts serotonin and reduces anxiety." },
+                { t: "Social Connection", d: "Maintain at least one meaningful interaction daily — even brief ones regulate mood." },
+                { t: "Limit Screens Before Bed", d: "Reduce blue-light exposure 1 hour before sleep. It interferes with melatonin production." },
+                { t: "Structured Routine", d: "Predictable daily schedules reduce anxiety by giving the brain a sense of control." },
+                { t: "Professional Support", d: "Therapy is not a last resort — it's a tool for anyone who wants to understand themselves better." },
+              ] : [
+                { t: "নিয়মিত ঘুম", d: "প্রতি রাতে ৭–৯ ঘণ্টা ঘুমের লক্ষ্য রাখুন।" },
+                { t: "শারীরিক নড়াচড়া", d: "প্রতিদিন মাত্র ২০ মিনিট হাঁটলে সেরোটোনিন বাড়ে এবং উদ্বেগ কমে।" },
+                { t: "সামাজিক যোগাযোগ", d: "প্রতিদিন অন্তত একটি অর্থবহ সামাজিক কথোপকথন বজায় রাখুন।" },
+                { t: "ঘুমের আগে স্ক্রিন কমান", d: "ঘুমের ১ ঘণ্টা আগে নীল আলো থেকে দূরে থাকুন।" },
+                { t: "নিয়মিত রুটিন", d: "পূর্বানুমানযোগ্য দৈনন্দিন রুটিন উদ্বেগ কমায়।" },
+                { t: "পেশাদার সহায়তা", d: "থেরাপি শেষ অবলম্বন নয় — নিজেকে বুঝতে এটি একটি হাতিয়ার।" },
+              ]).map((item, i) => (
+                <div key={i} className="border border-[#c4a45c]/30 bg-[#f9f2e3] rounded-sm p-4">
+                  <p className="text-sm font-medium text-[#1c2538] mb-1">{item.t}</p>
+                  <p className="text-xs text-[#5a4a2f] leading-relaxed">{item.d}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* footer */}
+          <div>
+            <div className="brass-rule mb-6" />
+            <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-end">
+              <div>
+                <p className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] mb-1">{l === "en" ? "Generated by" : "তৈরি করা হয়েছে"}</p>
+                <p className="text-sm font-medium text-[#1c2538]">{l === "en" ? "Psychological Self-Assessment Tool" : "মনস্তাত্ত্বিক স্ব-মূল্যায়ন যন্ত্র"}</p>
+                <p className="cf-mono text-[10px] text-[#8a6d3b] mt-1">{fmtDate(result.timestamp)}</p>
+              </div>
+              <p className="cf-mono text-[10px] text-[#8a6d3b] max-w-xs text-right leading-relaxed">{l === "en" ? "Not a substitute for professional clinical evaluation." : "পেশাদার ক্লিনিকাল মূল্যায়নের বিকল্প নয়।"}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* bottom nav */}
+      <div className="no-print max-w-4xl mx-auto mt-6 flex flex-col md:flex-row gap-3 px-1">
+        <button onClick={() => router.push("/")} className="flex-1 cf-mono text-[11px] uppercase tracking-wider py-3 rounded-sm border border-[#c4a45c]/30 text-[#8a93a8] hover:text-[#e9d9ad] hover:border-[#c4a45c]/60 transition-all">← {l === "en" ? "Back to Assessment" : "মূল্যায়নে ফিরুন"}</button>
+        <button onClick={handlePDF} disabled={isExporting} className="flex-1 cf-mono text-[11px] uppercase tracking-wider py-3 rounded-sm bg-[#c4a45c] hover:bg-[#d4b46c] text-[#0e1a2b] font-semibold transition-all disabled:opacity-50">{isExporting ? (l === "en" ? "Exporting…" : "এক্সপোর্ট…") : (l === "en" ? "↓ Export as PDF" : "↓ PDF সংরক্ষণ")}</button>
+      </div>
+    </main>
   );
 }
