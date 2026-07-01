@@ -167,14 +167,18 @@ export default function ReportPage() {
 
         {/* Disclaimer */}
         <div className="px-8 md:px-14 py-4 bg-[#f9f2e3] border-b border-[#c4a45c]/30">
-          <p className="cf-mono text-[10px] text-[#8a6d3b] leading-relaxed">⚠ {l === "en" ? "This document is a self-report screening instrument only. Not a clinical diagnosis. Never make treatment decisions based solely on this report." : "এই নথিটি শুধুমাত্র স্ব-প্রতিবেদন স্ক্রীনিং যন্ত্র। ক্লিনিকাল ডায়াগনোসিস নয়।"}</p>
+          <p className="cf-mono text-[10px] text-[#8a6d3b] leading-relaxed">⚠ {l === "en" ? "This document is a self-report screening instrument only. Not a clinical diagnosis. Never make treatment decisions based solely on this report." : "এই নথিটি শুধুমাত্র স্ব-প্রতিবেদন স্ক্রীনিং যন্ত্র। ক্লিনিকাল ডায়াগনোসিস নয়。"}</p>
         </div>
 
         <div className="px-6 md:px-14 py-8 md:py-12 space-y-10">
           {/* Summary */}
           <section>
             <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-4 border-b border-[#c4a45c]/30 pb-3">{l === "en" ? "Summary" : "সারাংশ"}</h2>
-            <div className="border-l-2 border-[#c4a45c] pl-4 py-1"><p className="text-[#3d3525] leading-relaxed">{result.summary[l]}</p></div>
+            <div className="border-l-2 border-[#c4a45c] pl-4 py-1">
+              <p className="text-[#3d3525] leading-relaxed">
+                {result.summary[l].replace("areas(s)", "areas")}
+              </p>
+            </div>
             <div className="mt-6 inline-flex items-center gap-3 border rounded-sm px-4 py-2.5" style={{ borderColor: `${rc}50` }}>
               <span className="cf-mono text-[10px] uppercase tracking-wider text-[#8a6d3b]">{l === "en" ? "Overall Risk" : "সামগ্রিক ঝুঁকি"}</span>
               <span className="h-4 w-px bg-[#c4a45c]/40" />
@@ -192,11 +196,12 @@ export default function ReportPage() {
             </section>
           )}
 
-          {/* Findings */}
+          {/* Findings - FULL CONTENT NOW SHOWING */}
           {result.findings && result.findings.length > 0 && (
             <section>
               <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-6 border-b border-[#c4a45c]/30 pb-3">{l === "en" ? "Identified Symptom Domains" : "শনাক্তকৃত লক্ষণ ডোমেন"}</h2>
               
+              {/* Overview Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                 {result.findings.map((f, i) => {
                   const c = sevHex(f.severity), p = sevPct(f.severity);
@@ -214,6 +219,7 @@ export default function ReportPage() {
                 })}
               </div>
 
+              {/* Detailed Cards */}
               <div className="space-y-6">
                 {result.findings.map((f, i) => {
                   const c = sevHex(f.severity), p = sevPct(f.severity);
@@ -246,11 +252,13 @@ export default function ReportPage() {
                       
                       <div className="h-px bg-[#c4a45c]/30 mb-4" />
                       
+                      {/* SCIENTIFIC EXPLANATION - NOW SHOWING */}
                       <div className="mb-4">
-                        <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Clinical Note" : "ক্লিনিকাল নোট"}</p>
+                        <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Scientific Explanation" : "বৈজ্ঞানিক ব্যাখ্যা"}</p>
                         <p className="text-sm text-[#3d3525] leading-relaxed">{f.description || "No description available."}</p>
                       </div>
                       
+                      {/* KEY INDICATORS - NOW SHOWING */}
                       {f.indications && f.indications.length > 0 && (
                         <div className="mb-4">
                           <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Key Indicators" : "প্রধান সূচক"}</p>
@@ -260,11 +268,13 @@ export default function ReportPage() {
                         </div>
                       )}
                       
+                      {/* RECOMMENDATION - NOW SHOWING */}
                       <div className="bg-[#1c2538]/5 border-l-2 border-[#c4a45c] p-3 mb-4 rounded-sm">
                         <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1">{l === "en" ? "Recommendation" : "সুপারিশ"}</p>
                         <p className="text-sm text-[#1c2538] leading-relaxed">{f.recommendation || "Consult a mental health professional for personalized guidance."}</p>
                       </div>
                       
+                      {/* EXERCISES */}
                       {f.exercises && f.exercises.length > 0 && (
                         <div>
                           <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-3">{l === "en" ? "Therapeutic Exercises" : "থেরাপিউটিক ব্যায়াম"}</p>
@@ -336,7 +346,7 @@ export default function ReportPage() {
                 <p className="text-sm font-medium text-[#1c2538]">{l === "en" ? "Psychological Self-Assessment Tool" : "মনস্তাত্ত্বিক স্ব-মূল্যায়ন যন্ত্র"}</p>
                 <p className="cf-mono text-[10px] text-[#8a6d3b] mt-1">{fmtDate(result.timestamp)}</p>
               </div>
-              <p className="cf-mono text-[10px] text-[#8a6d3b] max-w-xs text-right leading-relaxed">{l === "en" ? "Not a substitute for professional clinical evaluation." : "পেশাদার ক্লিনিকাল মূল্যায়নের বিকল্প নয়।"}</p>
+              <p className="cf-mono text-[10px] text-[#8a6d3b] max-w-xs text-right leading-relaxed">{l === "en" ? "Not a substitute for professional clinical evaluation." : "পেশাদার ক্লিনিকাল মূল্যায়নের বিকল্প নয়。"}</p>
             </div>
           </div>
         </div>
