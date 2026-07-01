@@ -711,7 +711,7 @@ export default function Home() {
             <span className="cf-mono text-[10px] text-[#8a6d3b]/70">{currentQuestionIndex + 1}/{currentQuestions.length}</span>
           </div>
           <h2 className="text-lg md:text-2xl font-medium text-[#1c2538] mb-8 leading-snug">{currentQuestion?.text[l]}</h2>
-          // Replace the options rendering with this:
+           
 <div className="space-y-2.5">
   {currentQuestion?.options.map((opt, idx) => {
     const isSelected = answers[currentQuestion.id] === idx; // ← Store INDEX, not score
