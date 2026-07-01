@@ -562,6 +562,20 @@ export default function Home() {
               {l === "en" ? "Open Case File" : "কেস ফাইল খুলুন"}
             </button>
             <p className="cf-mono text-[10px] text-[#8a6d3b]/80 mt-5 text-center leading-relaxed">{l === "en" ? "Screening instrument only — not a clinical diagnosis. Always consult a qualified mental health professional." : "স্ক্রীনিং যন্ত্র মাত্র — ক্লিনিকাল ডায়াগনোসিস নয়।"}</p>
+            {/* add this right after the disclaimer paragraph */}
+<div className="mt-8 pt-4 border-t border-[#c4a45c]/30 text-center">
+  <p className="cf-mono text-[10px] text-[#5a4a2f] tracking-wide">
+    Built by{' '}
+    <a
+      href="https://my-portfolio-eta-seven-hrcv9gnzaf.vercel.app"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-[#8a6d3b] hover:text-[#1c2538] transition-colors duration-200 font-medium underline decoration-[#c4a45c]/40 underline-offset-2 hover:decoration-[#1c2538]"
+    >
+      Shibli Noman Arnob
+    </a>
+  </p>
+</div>
           </div>
         </div>
       </main>
