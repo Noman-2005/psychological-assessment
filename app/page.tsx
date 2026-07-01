@@ -712,31 +712,38 @@ export default function Home() {
           </div>
           <h2 className="text-lg md:text-2xl font-medium text-[#1c2538] mb-8 leading-snug">{currentQuestion?.text[l]}</h2>
           <div className="space-y-2.5">
-            {currentQuestion?.options.map((opt, idx) => {
-              const sel = answers[currentQuestion.id] === opt.score;
-              return (
-                <button 
-  key={idx} 
-  onClick={() => {
-    // Toggle selection - only this option
-    if (sel) {
-      // If already selected, deselect it
-      const newAnswers = { ...answers };
-      delete newAnswers[currentQuestion.id];
-      setAnswers(newAnswers);
-    } else {
-      // Select this option and deselect all others
-      setAnswers({ ...answers, [currentQuestion.id]: opt.score });
-    }
-  }} 
-  className={`w-full text-left p-4 rounded-sm transition-all duration-200 flex items-start gap-4 border ${sel ? "bg-[#1c2538] border-[#c4a45c]" : "bg-[#f9f2e3] border-[#c4a45c]/30 hover:border-[#c4a45c] hover:bg-[#f4ecdb]"}`}
->
-                  <span className={`cf-mono flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] border ${sel ? "border-[#c4a45c] text-[#c4a45c]" : "border-[#8a6d3b]/40 text-[#8a6d3b]"}`}>{letters[idx] ?? idx + 1}</span>
-                  <span className={`text-sm md:text-base leading-relaxed pt-0.5 ${sel ? "text-[#e9d9ad]" : "text-[#1c2538]"}`}>{opt.text[l]}</span>
-                </button>
-              );
-            })}
-          </div>
+  {currentQuestion?.options.map((opt, idx) => {
+    const sel = answers[currentQuestion.id] === opt.score;
+    return (
+      <button 
+        key={idx} 
+        onClick={() => {
+          // If already selected, deselect it
+          if (sel) {
+            const newAnswers = { ...answers };
+            delete newAnswers[currentQuestion.id];
+            setAnswers(newAnswers);
+          } else {
+            // Select this option (only one at a time)
+            setAnswers({ ...answers, [currentQuestion.id]: opt.score });
+          }
+        }} 
+        className={`w-full text-left p-4 rounded-sm transition-all duration-200 flex items-start gap-4 border ${
+          sel ? "bg-[#1c2538] border-[#c4a45c]" : "bg-[#f9f2e3] border-[#c4a45c]/30 hover:border-[#c4a45c] hover:bg-[#f4ecdb]"
+        }`}
+      >
+        <span className={`cf-mono flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] border ${
+          sel ? "border-[#c4a45c] text-[#c4a45c]" : "border-[#8a6d3b]/40 text-[#8a6d3b]"
+        }`}>
+          {String.fromCharCode(65 + idx)}
+        </span>
+        <span className={`text-sm md:text-base leading-relaxed pt-0.5 ${sel ? "text-[#e9d9ad]" : "text-[#1c2538]"}`}>
+          {opt.text[l]}
+        </span>
+      </button>
+    );
+  })}
+</div>
           <div className="flex justify-between items-center mt-9 pt-5 border-t border-[#c4a45c]/30">
             <button onClick={handlePrevious} disabled={isFirst} className={`cf-mono text-xs uppercase tracking-wider px-4 py-2 rounded-sm border transition-all ${isFirst ? "opacity-30 cursor-not-allowed border-[#8a6d3b]/20 text-[#8a6d3b]" : "border-[#8a6d3b]/40 text-[#5a4a2f] hover:border-[#1c2538]"}`}>
               ← {l === "en" ? "Previous" : "পূর্ববর্তী"}

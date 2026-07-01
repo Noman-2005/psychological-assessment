@@ -78,31 +78,14 @@ export default function ReportPage() {
   const [isExporting, setIsExporting] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
-  // ===== LOAD DATA WITH MULTIPLE FALLBACKS =====
   useEffect(() => {
-    console.log("🔍 Loading report data...");
-    
-    // Try localStorage first
     let data = localStorage.getItem("reportData");
-    console.log("📦 localStorage:", data ? "Found" : "Not found");
-    
-    // If not, try sessionStorage
-    if (!data) {
-      data = sessionStorage.getItem("reportData");
-      console.log("📦 sessionStorage:", data ? "Found" : "Not found");
-    }
-    
+    if (!data) data = sessionStorage.getItem("reportData");
     if (data) {
       try {
         const parsed = JSON.parse(data);
-        console.log("✅ Parsed data:", parsed);
-        console.log("✅ Findings count:", parsed.findings?.length || 0);
         setResult(parsed);
-      } catch (e) {
-        console.error("❌ Error parsing data:", e);
-      }
-    } else {
-      console.log("❌ No data found in any storage");
+      } catch (e) {}
     }
   }, []);
 
@@ -130,24 +113,7 @@ export default function ReportPage() {
 
   const l = language;
 
-  // ===== LOADING STATE =====
-  if (!result) {
-    return (
-      <main className="cf-root min-h-screen flex items-center justify-center cf-ink">
-        <FontStyles />
-        <div className="text-center p-8">
-          <div className="w-14 h-14 border-2 border-[#c4a45c]/30 border-t-[#c4a45c] rounded-full animate-spin mx-auto mb-5" />
-          <p className="cf-mono text-xs text-[#c4a45c] uppercase tracking-[0.2em]">{l === "en" ? "Loading case file..." : "কেস ফাইল লোড হচ্ছে..."}</p>
-          <button onClick={() => router.push("/")} className="cf-mono text-xs uppercase tracking-wider px-6 py-2.5 rounded-sm border border-[#c4a45c]/60 text-[#e9d9ad] hover:bg-[#c4a45c]/10 transition-all mt-4">
-            ← {l === "en" ? "Return to Assessment" : "মূল্যায়নে ফিরুন"}
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  // ===== NO DATA STATE =====
-  if (!result.findings || result.findings.length === 0) {
+  if (!result || !result.findings || result.findings.length === 0) {
     return (
       <main className="cf-root min-h-screen flex items-center justify-center cf-ink">
         <FontStyles />
@@ -164,7 +130,6 @@ export default function ReportPage() {
   return (
     <main className="cf-root min-h-screen cf-ink py-8 px-4">
       <FontStyles />
-      {/* action bar */}
       <div className="no-print max-w-4xl mx-auto flex items-center justify-between mb-6 px-1">
         <button onClick={() => router.push("/")} className="cf-mono text-[11px] uppercase tracking-wider text-[#8a93a8] hover:text-[#c4a45c] transition-colors">← {l === "en" ? "Back" : "পেছনে"}</button>
         <div className="flex items-center gap-3">
@@ -173,15 +138,14 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* report */}
       <div ref={reportRef} className="cf-paper max-w-4xl mx-auto rounded-sm border border-[#c4a45c]/40 shadow-[0_40px_100px_rgba(0,0,0,0.6)] cf-fade overflow-hidden">
-        {/* cover */}
+        {/* Cover */}
         <div className="bg-[#1c2538] px-8 md:px-14 py-10 md:py-14 relative overflow-hidden">
           <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full opacity-[0.04] border-[40px] border-[#c4a45c]" />
           <div className="absolute right-8 bottom-4 w-24 h-24 rounded-full opacity-[0.06] border-[12px] border-[#c4a45c]" />
           <div className="flex items-center gap-3 mb-8"><div className="h-px flex-1 bg-[#c4a45c]/30" /><span className="cf-mono text-[10px] uppercase tracking-[0.3em] text-[#c4a45c]/70">{l === "en" ? "Confidential" : "গোপনীয়"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
-          <p className="cf-mono text-[11px] uppercase tracking-[0.25em] text-[#c4a45c] mb-3">{l === "en" ? "Psychological Case File — Assessment Report" : "মনস্তাত্ত্বিক কেস ফাইল — মূল্যায়ন প্রতিবেদন"}</p>
-          <h1 className="text-3xl md:text-5xl font-medium text-[#e9d9ad] mb-6 tracking-tight leading-tight">{l === "en" ? "Clinical\nFindings" : "ক্লিনিকাল\nফলাফল"}</h1>
+          <p className="cf-mono text-[11px] uppercase tracking-[0.25em] text-[#c4a45c] mb-3">{l === "en" ? "Psychological Assessment Report" : "মনস্তাত্ত্বিক মূল্যায়ন প্রতিবেদন"}</p>
+          <h1 className="text-3xl md:text-5xl font-medium text-[#e9d9ad] mb-6 tracking-tight leading-tight">{l === "en" ? "Clinical Findings" : "ক্লিনিকাল ফলাফল"}</h1>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
             {[
               { label: l === "en" ? "Date" : "তারিখ", value: fmtDate(result.timestamp) },
@@ -194,15 +158,14 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* disclaimer */}
         <div className="px-8 md:px-14 py-4 bg-[#f9f2e3] border-b border-[#c4a45c]/30">
           <p className="cf-mono text-[10px] text-[#8a6d3b] leading-relaxed">⚠ {l === "en" ? "This document is a self-report screening instrument only. Not a clinical diagnosis. Never make treatment decisions based solely on this report." : "এই নথিটি শুধুমাত্র স্ব-প্রতিবেদন স্ক্রীনিং যন্ত্র। ক্লিনিকাল ডায়াগনোসিস নয়।"}</p>
         </div>
 
         <div className="px-6 md:px-14 py-8 md:py-12 space-y-10">
-          {/* summary */}
+          {/* Summary */}
           <section>
-            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section I" : "অনুচ্ছেদ ১"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Summary" : "সারাংশ"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
             <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-4">{l === "en" ? "Summary" : "সারাংশ"}</h2>
             <div className="border-l-2 border-[#c4a45c] pl-4 py-1"><p className="text-[#3d3525] leading-relaxed">{result.summary[l]}</p></div>
             <div className="mt-6 inline-flex items-center gap-3 border rounded-sm px-4 py-2.5" style={{ borderColor: `${rc}50` }}>
@@ -212,7 +175,7 @@ export default function ReportPage() {
             </div>
           </section>
 
-          {/* critical */}
+          {/* Critical Alerts */}
           {result.criticalFindings && result.criticalFindings.length > 0 && (
             <section>
               <div className="border-2 border-[#8b2e2e]/60 bg-[#f6e3e0] rounded-sm p-5 md:p-6">
@@ -222,12 +185,12 @@ export default function ReportPage() {
             </section>
           )}
 
-          {/* findings */}
+          {/* Findings */}
           {result.findings && result.findings.length > 0 && (
             <section>
-              <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section II" : "অনুচ্ছেদ ২"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+              <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Identified Domains" : "শনাক্তকৃত ডোমেন"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
               <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-6">{l === "en" ? "Identified Symptom Domains" : "শনাক্তকৃত লক্ষণ ডোমেন"}</h2>
-              {/* overview grid */}
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                 {result.findings.map((f, i) => {
                   const c = sevHex(f.severity), p = sevPct(f.severity);
@@ -244,7 +207,7 @@ export default function ReportPage() {
                   );
                 })}
               </div>
-              {/* detailed cards */}
+
               <div className="space-y-6">
                 {result.findings.map((f, i) => {
                   const c = sevHex(f.severity), p = sevPct(f.severity);
@@ -258,7 +221,7 @@ export default function ReportPage() {
                         </div>
                         <span className="cf-mono text-[10px] px-2.5 py-1 rounded-sm border flex-shrink-0" style={{ color: c, borderColor: `${c}60`, backgroundColor: `${c}10` }}>{sl}</span>
                       </div>
-                      {/* meter */}
+                      
                       <div className="flex items-center gap-4 mb-4">
                         <div className="flex-1">
                           <div className="h-2 bg-[#1c2538]/10 rounded-full overflow-hidden">
@@ -274,13 +237,14 @@ export default function ReportPage() {
                           <p className="cf-mono text-[10px] text-[#8a6d3b]">{f.score}/{f.maxScore}</p>
                         </div>
                       </div>
+                      
                       <div className="h-px bg-[#c4a45c]/30 mb-4" />
-                      {/* Description */}
+                      
                       <div className="mb-4">
                         <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Clinical Note" : "ক্লিনিকাল নোট"}</p>
                         <p className="text-sm text-[#3d3525] leading-relaxed">{f.description || "No description available."}</p>
                       </div>
-                      {/* Indications */}
+                      
                       {f.indications && f.indications.length > 0 && (
                         <div className="mb-4">
                           <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1.5">{l === "en" ? "Key Indicators" : "প্রধান সূচক"}</p>
@@ -289,12 +253,12 @@ export default function ReportPage() {
                           </div>
                         </div>
                       )}
-                      {/* Recommendation */}
+                      
                       <div className="bg-[#1c2538]/5 border-l-2 border-[#c4a45c] p-3 mb-4 rounded-sm">
                         <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-1">{l === "en" ? "Recommendation" : "সুপারিশ"}</p>
                         <p className="text-sm text-[#1c2538] leading-relaxed">{f.recommendation || "Consult a mental health professional for personalized guidance."}</p>
                       </div>
-                      {/* Exercises */}
+                      
                       {f.exercises && f.exercises.length > 0 && (
                         <div>
                           <p className="cf-mono text-[10px] uppercase tracking-[0.18em] text-[#8a6d3b] mb-3">{l === "en" ? "Therapeutic Exercises" : "থেরাপিউটিক ব্যায়াম"}</p>
@@ -316,17 +280,9 @@ export default function ReportPage() {
             </section>
           )}
 
-          {(!result.findings || result.findings.length === 0) && (
-            <section>
-              <div className="border border-[#3b6b4f]/40 bg-[#e8efe6] rounded-sm p-6 text-center">
-                <p className="text-[#2d543d] text-base">{l === "en" ? "No significant psychological concerns were identified." : "কোনো উল্লেখযোগ্য মানসিক উদ্বেগ শনাক্ত হয়নি।"}</p>
-              </div>
-            </section>
-          )}
-
-          {/* crisis resources */}
+          {/* Crisis Resources */}
           <section>
-            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section III" : "অনুচ্ছেদ ৩"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Crisis Resources" : "সংকট সম্পদ"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
             <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-2">{l === "en" ? "Crisis Resources" : "সংকট সম্পদ"}</h2>
             <p className="text-sm text-[#5a4a2f] mb-5">{l === "en" ? "If you are experiencing a crisis or feel unsafe, please reach out immediately." : "যদি আপনি কোনো সংকটে থাকেন, অনুগ্রহ করে এখনই যোগাযোগ করুন।"}</p>
             <div className="space-y-3">
@@ -339,9 +295,9 @@ export default function ReportPage() {
             </div>
           </section>
 
-          {/* wellness */}
+          {/* Wellness Guidelines */}
           <section>
-            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Section IV" : "অনুচ্ছেদ ৪"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
+            <div className="flex items-center gap-4 mb-5"><span className="cf-mono text-[10px] uppercase tracking-[0.2em] text-[#8a6d3b] border border-[#c4a45c]/40 px-2.5 py-1 rounded-sm">{l === "en" ? "Wellness Guidelines" : "সুস্থতার নির্দেশিকা"}</span><div className="h-px flex-1 bg-[#c4a45c]/30" /></div>
             <h2 className="text-2xl md:text-3xl font-medium text-[#1c2538] mb-5">{l === "en" ? "General Wellness Guidelines" : "সাধারণ সুস্থতার নির্দেশিকা"}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(l === "en" ? [
@@ -367,7 +323,7 @@ export default function ReportPage() {
             </div>
           </section>
 
-          {/* footer */}
+          {/* Footer */}
           <div>
             <div className="brass-rule mb-6" />
             <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-end">
@@ -382,7 +338,6 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* bottom nav */}
       <div className="no-print max-w-4xl mx-auto mt-6 flex flex-col md:flex-row gap-3 px-1">
         <button onClick={() => router.push("/")} className="flex-1 cf-mono text-[11px] uppercase tracking-wider py-3 rounded-sm border border-[#c4a45c]/30 text-[#8a93a8] hover:text-[#e9d9ad] hover:border-[#c4a45c]/60 transition-all">← {l === "en" ? "Back to Assessment" : "মূল্যায়নে ফিরুন"}</button>
         <button onClick={handlePDF} disabled={isExporting} className="flex-1 cf-mono text-[11px] uppercase tracking-wider py-3 rounded-sm bg-[#c4a45c] hover:bg-[#d4b46c] text-[#0e1a2b] font-semibold transition-all disabled:opacity-50">{isExporting ? (l === "en" ? "Exporting…" : "এক্সপোর্ট…") : (l === "en" ? "↓ Export as PDF" : "↓ PDF সংরক্ষণ")}</button>
