@@ -565,7 +565,7 @@ export default function Home() {
             {/* add this right after the disclaimer paragraph */}
 <div className="mt-8 pt-4 border-t border-[#c4a45c]/30 text-center">
   <p className="cf-mono text-[10px] text-[#5a4a2f] tracking-wide">
-    Built by{' '}
+    Developed by{' '}
     <a
       href="https://my-portfolio-eta-seven-hrcv9gnzaf.vercel.app"
       target="_blank"
